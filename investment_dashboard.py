@@ -13,13 +13,13 @@ st.title("📈 Investment Performance Dashboard")
 uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 
 if uploaded_file:
-    df_raw = pd.read_excel(uploaded_file, sheet_name=0)
+    df_raw = pd.read_excel(uploaded_file, sheet_name=0, header=1)
 
     # --- Column Auto-Mapping ---
     column_map = {
         "Investment Name": ["Account Name", "Company", "Investment"],
         "Cost": ["Total Investment", "Amount Invested"],
-        "Fair Value": ["Share of Valuation", "Fair Value"],
+        "Fair Value": ["Share of Valuation"],  # force using Share of Valuation only
         "Date": ["Valuation Date", "Investment Date"],
         "Fund Name": ["Parent Account", "Fund"]
     }
@@ -108,4 +108,3 @@ if uploaded_file:
         )
     else:
         st.error("Missing required columns in uploaded file. Please ensure headers match expected structure.")
-
