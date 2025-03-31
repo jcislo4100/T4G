@@ -1,3 +1,5 @@
+# IRR and MOIC Calculator Prototype using Streamlit
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,102 +11,86 @@ import io
 st.set_page_config(layout="wide")
 st.title("📈 Investment Performance Dashboard")
 
-# --- File Upload ---
-uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload Investment Excel", type="xlsx")
 
 if uploaded_file:
-    df_raw = pd.read_excel(uploaded_file, sheet_name=0, header=1)
+    try:
+        df = pd.read_excel(uploaded_file)
+        df.columns = df.columns.str.strip()  # Normalize column headers
 
-    # --- Column Auto-Mapping ---
-    column_map = {
-        "Investment Name": ["Account Name", "Company", "Investment"],
-        "Cost": ["Total Investment", "Amount Invested"],
-        "Fair Value": ["Share of Valuation"],  # force using Share of Valuation only
-        "Date": ["Valuation Date", "Investment Date"],
-        "Fund Name": ["Parent Account", "Fund"]
-    }
+        # Required columns
+        required_cols = ["Investment Name", "Cost", "Fair Value", "Date", "Fund Name"]
+        if not all(col in df.columns for col in required_cols):
+            st.error("Missing required columns in uploaded file. Please ensure headers match expected structure.")
+        else:
+            df = df[required_cols].copy()
+            df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
+            df = df.dropna(subset=["Date", "Cost", "Fair Value"])
 
-    mapped_cols = {}
-    for std_col, options in column_map.items():
-        for opt in options:
-            if opt in df_raw.columns:
-                mapped_cols[std_col] = opt
-                break
+            # Portfolio Metrics
+            total_invested = df["Cost"].sum()
+            total_fair_value = df["Fair Value"].sum()
+            moic = total_fair_value / total_invested if total_invested else np.nan
 
-    required_cols = ["Investment Name", "Cost", "Fair Value", "Date", "Fund Name"]
-    if all(col in mapped_cols for col in required_cols):
-        df = df_raw[[mapped_cols[col] for col in required_cols]].copy()
-        df.columns = required_cols
+            # IRR Calculation
+            df_grouped = df.groupby("Date").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index()
+            cash_flows = []
+            for date, row in df_grouped.iterrows():
+                cash_flows.append((-row["Cost"], date))
+            if not df.empty:
+                latest_date = df["Date"].max()
+                final_value = df[df["Date"] == latest_date]["Fair Value"].sum()
+                cash_flows.append((final_value, latest_date))
 
-        # --- Preprocessing ---
-        df = df.dropna(subset=["Cost", "Fair Value"])
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-        df = df.dropna(subset=["Date"])
-        df["Cost"] = pd.to_numeric(df["Cost"], errors="coerce")
-        df["Fair Value"] = pd.to_numeric(df["Fair Value"], errors="coerce")
-        df = df.dropna()
-
-        # --- MOIC ---
-        df["MOIC"] = df["Fair Value"] / df["Cost"]
-
-        # --- IRR ---
-        def calculate_irr(row):
-            dates = [row["Date"], datetime.today()]
-            cash_flows = [-row["Cost"], row["Fair Value"]]
+            cf_series = pd.Series({dt: cf for cf, dt in cash_flows})
+            cf_series = cf_series.sort_index()
             try:
-                return round(npf.irr(cash_flows) * 100, 2)
+                irr = npf.irr(cf_series.values)
+                irr_percent = irr * 100 if irr is not None else np.nan
             except:
-                return np.nan
+                irr_percent = np.nan
 
-        df["IRR"] = df.apply(calculate_irr, axis=1)
+            # Layout
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
+            col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
+            col3.metric("Portfolio MOIC", f"{moic:.2f}")
+            col4.metric("Estimated IRR", f"{irr_percent:.1f}%")
 
-        # --- Portfolio Stats ---
-        total_cost = df["Cost"].sum()
-        total_fv = df["Fair Value"].sum()
-        portfolio_moic = total_fv / total_cost if total_cost else 0
-        try:
-            portfolio_irr = npf.irr([-total_cost] + [total_fv]) * 100
-        except:
-            portfolio_irr = np.nan
+            # MOIC by Investment
+            df["MOIC"] = df["Fair Value"] / df["Cost"]
+            st.subheader("📊 MOIC by Investment")
+            st.dataframe(df[["Investment Name", "Cost", "Fair Value", "MOIC"]])
 
-        # --- Metrics ---
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Total Amount Invested", f"${total_cost:,.0f}")
-        col2.metric("Total Fair Value", f"${total_fv:,.0f}")
-        col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}")
-        col4.metric("Estimated IRR", f"{portfolio_irr:.2f}%")
+            # Distribution Chart
+            st.subheader("📉 MOIC Distribution")
+            fig = px.histogram(df, x="MOIC", nbins=20, title="Distribution of MOIC across Investments")
+            st.plotly_chart(fig, use_container_width=True)
 
-        # --- Top & Bottom Investments ---
-        st.markdown("### 📊 Top 5 Investments by MOIC")
-        st.dataframe(df.sort_values("MOIC", ascending=False).head(5))
+            # Top Performers
+            st.markdown("**Top 5 Investments by MOIC**")
+            top_moic = df.sort_values("MOIC", ascending=False).head(5)
+            st.dataframe(top_moic[["Investment Name", "MOIC", "Fair Value"]])
 
-        st.markdown("### 🔻 Bottom 5 Investments by MOIC")
-        st.dataframe(df.sort_values("MOIC").head(5))
+            # Bottom Performers
+            low_moic = df[df["MOIC"] < 1.0]
+            unrealized_pct = low_moic.shape[0] / df.shape[0] * 100
+            avg_holding_period = (datetime.today() - df["Date"]).dt.days.mean() / 365
 
-        # --- Fund-Level Analysis ---
-        st.markdown("### 🏦 Fund-Level Summary")
-        fund_group = df.groupby("Fund Name").agg({
-            "Cost": "sum",
-            "Fair Value": "sum"
-        })
-        fund_group["MOIC"] = fund_group["Fair Value"] / fund_group["Cost"]
-        st.dataframe(fund_group.reset_index())
+            st.markdown(f"**Investments below 1.0x MOIC:** {low_moic.shape[0]} ({unrealized_pct:.1f}%)")
+            st.markdown(f"**Avg. Holding Period:** {avg_holding_period:.2f} years")
 
-        # --- Charts ---
-        st.markdown("### 📈 MOIC Distribution")
-        st.plotly_chart(px.histogram(df, x="MOIC", nbins=20))
+            # Export
+            st.markdown("---")
+            st.subheader("📤 Export")
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)
+            st.download_button(
+                label="Download Portfolio Table as CSV",
+                data=csv_buffer.getvalue(),
+                file_name="portfolio_summary.csv",
+                mime="text/csv"
+            )
 
-        st.markdown("### 🏢 IRR by Investment")
-        st.plotly_chart(px.bar(df, x="Investment Name", y="IRR", color="Fund Name"))
-
-        # --- CSV Export ---
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            "Download Full Table as CSV",
-            csv,
-            "investments.csv",
-            "text/csv",
-            key='download-csv'
-        )
-    else:
-        st.error("Missing required columns in uploaded file. Please ensure headers match expected structure.")
+    except Exception as e:
+        st.error(f"Error loading file: {e}")
