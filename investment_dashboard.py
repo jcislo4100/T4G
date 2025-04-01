@@ -7,13 +7,24 @@ from datetime import datetime
 import io
 
 st.set_page_config(layout="wide", page_title="Investment Dashboard", page_icon="📊")
-st.markdown("""
-    <style>
-        .main { background-color: #f8f9fa; }
-        .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-        .stDataFrame th { background-color: #f1f1f1; }
-    </style>
-""", unsafe_allow_html=True)
+
+# Theme toggle
+mode = st.sidebar.radio("Theme Mode", ["Light", "Dark"], index=0)
+
+if mode == "Dark":
+    st.markdown("""
+        <style>
+            body, .main, .block-container { background-color: #1e1e1e; color: white; }
+            .stDataFrame th { background-color: #2c2c2c; }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+            body, .main, .block-container { background-color: #f8f9fa; color: black; }
+            .stDataFrame th { background-color: #f1f1f1; }
+        </style>
+    """, unsafe_allow_html=True)
 
 st.title(":bar_chart: Investment Performance Dashboard")
 
@@ -30,20 +41,16 @@ if uploaded_file is not None:
         df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
         df = df.dropna(subset=["Date"])
 
-        # Compute MOIC
         df["MOIC"] = df["Fair Value"] / df["Cost"]
 
-        # Compute ROI and Annualized ROI
         today = pd.Timestamp.today()
         df["ROI"] = (df["Fair Value"] - df["Cost"]) / df["Cost"]
         df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
 
-        # Fund Filter
         funds = ["All"] + sorted(df["Fund Name"].dropna().unique())
         selected_fund = st.selectbox("Select Fund", funds)
         df_filtered = df if selected_fund == "All" else df[df["Fund Name"] == selected_fund]
 
-        # Portfolio metrics
         total_invested = df_filtered["Cost"].sum()
         total_fair_value = df_filtered["Fair Value"].sum()
         portfolio_moic = total_fair_value / total_invested if total_invested != 0 else 0
@@ -149,3 +156,9 @@ if uploaded_file is not None:
 
         st.markdown("### :abacus: Investment Table")
         st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]].style.applymap(highlight, subset=["ROI", "Annualized ROI"]))
+
+        # PDF Export Button
+        st.markdown("### Export")
+        if st.button("Download Summary as CSV"):
+            csv = df_filtered.to_csv(index=False).encode('utf-8')
+            st.download_button("Download File", data=csv, file_name="investment_summary.csv", mime="text/csv")
