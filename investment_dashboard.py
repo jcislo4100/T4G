@@ -55,8 +55,9 @@ if uploaded_file is not None:
         # Fund Filter
         funds = ["All"] + sorted(df["Fund Name"].dropna().unique())
         selected_fund = st.selectbox("Select Fund", funds)
+        df_filtered = df.copy()
         if selected_fund != "All":
-            df = df[df["Fund Name"] == selected_fund]
+            df_filtered = df[df["Fund Name"] == selected_fund]
 
         # Summary Metrics Display
         st.markdown("### Summary")
@@ -106,4 +107,4 @@ if uploaded_file is not None:
         # Display Table
         st.markdown("---")
         st.subheader("🔢 Investment Table")
-        st.dataframe(df[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "IRR"]])
+        st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "IRR"]]
