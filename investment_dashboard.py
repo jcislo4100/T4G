@@ -103,6 +103,37 @@ if uploaded_file is not None:
             st.plotly_chart(fig4, use_container_width=True)
 
         st.subheader(":world_map: Geographic Investment Map")
+
+        # Add estimated coordinates based on known cities
+        location_coords = {
+            "Cincinnati, OH": (39.1031, -84.5120),
+            "Ann Arbor, MI": (42.2808, -83.7430),
+            "San Francisco, CA": (37.7749, -122.4194),
+            "Cleveland, OH": (41.4993, -81.6944),
+            "Chicago, IL": (41.8781, -87.6298),
+            "Lansing, MI": (42.7325, -84.5555),
+            "Boston, MA": (42.3601, -71.0589),
+            "Grand Rapids, MI": (42.9634, -85.6681),
+            "Brooklyn, NY": (40.6782, -73.9442),
+            "Miami, FL": (25.7617, -80.1918),
+            "New York, NY": (40.7128, -74.0060),
+            "Nashville, TN": (36.1627, -86.7816),
+            "Waco, TX": (31.5493, -97.1467),
+            "Sunnyvale, CA": (37.3688, -122.0363),
+            "Hawthorne, NY": (41.1076, -73.7954),
+            "Boulder, CO": (40.01499, -105.2705),
+            "Palo Alto, CA": (37.4419, -122.1430),
+            "Oakland, CA": (37.8044, -122.2711),
+            "Carlsbad, CA": (33.1581, -117.3506),
+            "Tampa, FL": (27.9506, -82.4572),
+            "Columbus, OH": (39.9612, -82.9988)
+        }
+
+        if "City" in df_filtered.columns and "State" in df_filtered.columns:
+            df_filtered["CityState"] = df_filtered["City"].str.strip() + ", " + df_filtered["State"].str.strip()
+            df_filtered["Latitude"] = df_filtered["CityState"].map(lambda x: location_coords.get(x, (np.nan, np.nan))[0])
+            df_filtered["Longitude"] = df_filtered["CityState"].map(lambda x: location_coords.get(x, (np.nan, np.nan))[1])
+
         if "Latitude" in df_filtered.columns and "Longitude" in df_filtered.columns:
             geo_df = df_filtered.dropna(subset=["Latitude", "Longitude"])
             if not geo_df.empty:
