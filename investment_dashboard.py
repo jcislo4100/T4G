@@ -9,92 +9,74 @@ import io
 st.set_page_config(layout="wide")
 st.title("📈 Investment Performance Dashboard")
 
-uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload Investment Excel", type="xlsx")
 
-if uploaded_file is not None:
+if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    required_columns = ["Investment Name", "Cost", "Fair Value", "Date", "Fund Name"]
-    if not all(col in df.columns for col in required_columns):
-        st.error("Missing required columns in uploaded file. Please ensure headers match expected structure.")
-    else:
-        df = df.dropna(subset=["Cost", "Fair Value", "Date"])  # Ensure no nulls in key columns
+    df = df[['Investment Name', 'Cost', 'Fair Value', 'Date', 'Fund Name']].dropna()
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df = df.dropna(subset=['Date'])
 
-        # Convert dates
-        df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
-        df = df.dropna(subset=["Date"])  # Drop if date conversion failed
+    df['MOIC'] = df['Fair Value'] / df['Cost']
 
-        # Compute MOIC
-        df["MOIC"] = df["Fair Value"] / df["Cost"]
-
-        # Compute IRR per investment
-        def calc_irr(row):
-            try:
-                cash_flows = [-row["Cost"]]
-                date_range = [row["Date"], pd.Timestamp.today()]
-                if row["Fair Value"] > 0:
-                    cash_flows.append(row["Fair Value"])
-                return npf.xirr(dict(zip(date_range, cash_flows)))
-            except Exception:
-                return np.nan
-
-        df["IRR"] = df.apply(calc_irr, axis=1)
-
-        # Portfolio metrics
-        total_invested = df["Cost"].sum()
-        total_fair_value = df["Fair Value"].sum()
-        portfolio_moic = total_fair_value / total_invested if total_invested != 0 else 0
-
-        # Aggregate portfolio IRR
-        all_cashflows = []
-        for _, row in df.iterrows():
-            all_cashflows.append((row["Date"], -row["Cost"]))
-            all_cashflows.append((pd.Timestamp.today(), row["Fair Value"]))
-
-        cashflow_series = pd.DataFrame(all_cashflows, columns=["date", "amount"]).groupby("date").sum().sort_index()
+    # IRR Calculation per Investment
+    def calculate_irr(row):
         try:
-            portfolio_irr = npf.xirr(cashflow_series["amount"].to_dict())
+            cash_flows = [-row['Cost'], row['Fair Value']]
+            dates = [row['Date'], datetime.today()]
+            days = [(d - dates[0]).days for d in dates]
+            return npf.xirr(dict(zip(dates, cash_flows)))
         except Exception:
-            portfolio_irr = np.nan
+            return np.nan
 
-        # Fund filter
-        funds = ["All"] + sorted(df["Fund Name"].dropna().unique())
-        selected_fund = st.selectbox("Select Fund", funds)
-        if selected_fund != "All":
-            df = df[df["Fund Name"] == selected_fund]
+    df['IRR'] = df.apply(calculate_irr, axis=1)
 
-        st.markdown("### Summary")
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
-        col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
-        col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}")
-        col4.metric("Estimated IRR", f"{portfolio_irr:.1%}" if not np.isnan(portfolio_irr) else "N/A")
+    # Fund-Level Aggregation
+    fund_group = df.groupby('Fund Name').agg({
+        'Cost': 'sum',
+        'Fair Value': 'sum'
+    }).reset_index()
+    fund_group['Portfolio MOIC'] = fund_group['Fair Value'] / fund_group['Cost']
 
-        # Portfolio MOIC by Fund Chart
-        st.subheader("📊 Portfolio MOIC by Fund")
-        moic_by_fund = df.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
-        fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund")
-        st.plotly_chart(fig1, use_container_width=True)
+    # Fund-Level IRR Calculation
+    fund_irr = []
+    for fund in df['Fund Name'].unique():
+        fund_df = df[df['Fund Name'] == fund]
+        cash_flows = [-fund_df['Cost'].sum(), fund_df['Fair Value'].sum()]
+        dates = [fund_df['Date'].min(), datetime.today()]
+        try:
+            irr = npf.xirr(dict(zip(dates, cash_flows)))
+        except Exception:
+            irr = np.nan
+        fund_irr.append({'Fund Name': fund, 'Portfolio IRR': irr})
 
-        # IRR by Fund Chart
-        st.subheader("📈 Portfolio IRR by Fund")
-        irr_rows = []
-        for fund in df["Fund Name"].unique():
-            fdf = df[df["Fund Name"] == fund]
-            cashflows = []
-            for _, row in fdf.iterrows():
-                cashflows.append((row["Date"], -row["Cost"]))
-                cashflows.append((pd.Timestamp.today(), row["Fair Value"]))
-            series = pd.DataFrame(cashflows, columns=["date", "amount"]).groupby("date").sum().sort_index()
-            try:
-                irr_val = npf.xirr(series["amount"].to_dict())
-                irr_rows.append((fund, irr_val))
-            except:
-                irr_rows.append((fund, np.nan))
+    fund_irr_df = pd.DataFrame(fund_irr)
+    fund_summary = pd.merge(fund_group, fund_irr_df, on='Fund Name')
 
-        irr_df = pd.DataFrame(irr_rows, columns=["Fund Name", "Portfolio IRR"]).dropna()
-        fig2 = px.bar(irr_df, x="Fund Name", y="Portfolio IRR", title="IRR per Fund")
-        st.plotly_chart(fig2, use_container_width=True)
+    # Metrics
+    st.metric("Total Amount Invested", f"${df['Cost'].sum():,.0f}")
+    st.metric("Total Fair Value", f"${df['Fair Value'].sum():,.0f}")
+    st.metric("Portfolio MOIC", f"{df['Fair Value'].sum() / df['Cost'].sum():.2f}")
+    st.metric("Estimated IRR", f"{npf.xirr(dict(zip([df['Date'].min(), datetime.today()], [-df['Cost'].sum(), df['Fair Value'].sum()])):.1%}")
+
+    # Portfolio MOIC Chart
+    st.header("📊 Portfolio MOIC by Fund")
+    st.plotly_chart(px.bar(fund_summary, x='Fund Name', y='Portfolio MOIC', title="MOIC by Fund"))
+
+    # Portfolio IRR Chart
+    st.header("📉 Portfolio IRR by Fund")
+    st.plotly_chart(px.bar(fund_summary, x='Fund Name', y='Portfolio IRR', title="IRR by Fund"))
+
+    # MOIC Histogram
+    st.header("📈 MOIC Distribution")
+    st.subheader("Distribution of MOIC across Investments")
+    st.plotly_chart(px.histogram(df, x='MOIC'))
+
+    # IRR Histogram
+    st.header("📉 IRR by Investment")
+    st.subheader("Distribution of IRRs")
+    st.plotly_chart(px.histogram(df, x='IRR'))
 
         # Show Table
         st.markdown("---")
