@@ -69,23 +69,16 @@ if uploaded_file is not None:
         total_invested = df["Cost"].sum()
         total_fair_value = df["Fair Value"].sum()
         portfolio_moic = total_fair_value / total_invested if total_invested != 0 else 0
-
-        try:
-            df_cashflows = pd.concat([
-                df[["Date", "Cost"]].assign(Cost=lambda x: -x["Cost"]).rename(columns={"Cost": "amount"}),
-                pd.DataFrame({"date": [today] * len(df), "amount": df["Fair Value"]})
-            ])
-            df_cashflows = df_cashflows.groupby("date")["amount"].sum().sort_index()
-            portfolio_irr = npf.xirr(df_cashflows.to_dict())
-        except:
-            portfolio_irr = np.nan
+        portfolio_roi = (total_fair_value - total_invested) / total_invested
+        total_days = (today - df["Date"].min()).days
+        portfolio_annualized_roi = portfolio_roi / (total_days / 365.25) if total_days > 0 else np.nan
 
         st.markdown("### 📊 Summary")
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
         col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
         col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}")
-        col4.metric("Estimated IRR", f"{portfolio_irr:.1%}" if not np.isnan(portfolio_irr) else "N/A")
+        col4.metric("Annual ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A")
 
         st.markdown("---")
         st.subheader("📊 Portfolio MOIC by Fund")
@@ -102,6 +95,12 @@ if uploaded_file is not None:
         pie_df = df.groupby("Fund Name")["Cost"].sum().reset_index()
         fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund")
         st.plotly_chart(fig3, use_container_width=True)
+
+        if "Stage" in df.columns:
+            st.subheader("🧬 Investments by Stage")
+            stage_df = df.groupby("Stage")["Cost"].sum().reset_index()
+            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage")
+            st.plotly_chart(fig4, use_container_width=True)
 
         def highlight(val):
             return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
