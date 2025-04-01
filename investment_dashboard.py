@@ -8,23 +8,12 @@ import io
 
 st.set_page_config(layout="wide", page_title="Investment Dashboard", page_icon="📊")
 
-# Theme toggle
-mode = st.sidebar.radio("Theme Mode", ["Light", "Dark"], index=0)
-
-if mode == "Dark":
-    st.markdown("""
-        <style>
-            body, .main, .block-container { background-color: #1e1e1e; color: white; }
-            .stDataFrame th { background-color: #2c2c2c; }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-            body, .main, .block-container { background-color: #f8f9fa; color: black; }
-            .stDataFrame th { background-color: #f1f1f1; }
-        </style>
-    """, unsafe_allow_html=True)
+# Sidebar menu for export options
+with st.sidebar:
+    st.header("📥 Export Options")
+    download_csv = st.button("📄 Download CSV")
+    # Placeholder for PDF option
+    st.caption("(PDF download coming soon!)")
 
 st.title(":bar_chart: Investment Performance Dashboard")
 
@@ -68,23 +57,23 @@ if uploaded_file is not None:
         st.markdown("---")
         st.subheader(":bar_chart: Portfolio MOIC by Fund")
         moic_by_fund = df_filtered.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
-        fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text_auto=True, color_discrete_sequence=["#B1874C"])
+        fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text_auto=True, color_discrete_sequence=["#B1874C"] * len(moic_by_fund))
         st.plotly_chart(fig1, use_container_width=True)
 
         st.subheader(":chart_with_upwards_trend: Annualized ROI by Fund")
         roi_fund = df_filtered.groupby("Fund Name")["Annualized ROI"].mean().reset_index()
-        fig2 = px.bar(roi_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund", text_auto=".1%", color_discrete_sequence=["#B1874C"])
+        fig2 = px.bar(roi_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund", text_auto=".1%", color_discrete_sequence=["#B1874C"] * len(roi_fund))
         st.plotly_chart(fig2, use_container_width=True)
 
         st.subheader(":moneybag: Capital Allocation by Fund")
         pie_df = df_filtered.groupby("Fund Name")["Cost"].sum().reset_index()
-        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund", color_discrete_sequence=["#B1874C"] * len(pie_df))
+        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund", color_discrete_sequence=px.colors.sequential.YlOrBr[:len(pie_df)])
         st.plotly_chart(fig3, use_container_width=True)
 
         if "Stage" in df_filtered.columns:
             st.subheader(":dna: Investments by Stage")
             stage_df = df_filtered.groupby("Stage")["Cost"].sum().reset_index()
-            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=px.colors.sequential.Sunset)
+            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=px.colors.sequential.YlOrBr[:len(stage_df)])
             st.plotly_chart(fig4, use_container_width=True)
 
         st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
@@ -157,8 +146,6 @@ if uploaded_file is not None:
         st.markdown("### :abacus: Investment Table")
         st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]].style.applymap(highlight, subset=["ROI", "Annualized ROI"]))
 
-        # PDF Export Button
-        st.markdown("### Export")
-        if st.button("Download Summary as CSV"):
+        if download_csv:
             csv = df_filtered.to_csv(index=False).encode('utf-8')
-            st.download_button("Download File", data=csv, file_name="investment_summary.csv", mime="text/csv")
+            st.download_button("Download CSV", data=csv, file_name="investment_summary.csv", mime="text/csv")
