@@ -107,20 +107,23 @@ if uploaded_file is not None:
 
         if "City" in df.columns and "State" in df.columns:
             st.subheader("🗺️ Geographic Investment Map")
-            df_geo = df.copy()
+            df_geo = df.dropna(subset=["City", "State"])
             df_geo["Location"] = df_geo["City"] + ", " + df_geo["State"]
-            geo_map = px.scatter_geo(
-                df_geo,
-                locations="Location",
-                locationmode="USA-states",
-                scope="usa",
-                color="Fund Name",
-                size="Cost",
-                hover_name="Investment Name",
-                title="Investments by Location",
-                color_discrete_sequence=["#B1874C"]
-            )
-            st.plotly_chart(geo_map, use_container_width=True)
+            if not df_geo.empty:
+                geo_map = px.scatter_geo(
+                    df_geo,
+                    locations="Location",
+                    locationmode="USA-states",
+                    scope="usa",
+                    color="Fund Name",
+                    size="Cost",
+                    hover_name="Investment Name",
+                    title="Investments by Location",
+                    color_discrete_sequence=["#B1874C"]
+                )
+                st.plotly_chart(geo_map, use_container_width=True)
+            else:
+                st.info("No valid location data to display a map. Please check your City and State columns.")
 
         st.subheader("🧠 AI Summary Generator")
         high_roi = df[df["Annualized ROI"] > 0.20]
