@@ -107,4 +107,4 @@ if uploaded_file is not None:
         # Display Table
         st.markdown("---")
         st.subheader("🔢 Investment Table")
-        st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "IRR"]]
+        st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "IRR"]])
