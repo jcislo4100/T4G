@@ -102,10 +102,10 @@ if uploaded_file is not None:
             fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage")
             st.plotly_chart(fig4, use_container_width=True)
 
+        st.subheader(":world_map: Geographic Investment Map")
         if "Latitude" in df_filtered.columns and "Longitude" in df_filtered.columns:
             geo_df = df_filtered.dropna(subset=["Latitude", "Longitude"])
             if not geo_df.empty:
-                st.subheader(":world_map: Geographic Investment Map")
                 st.markdown("#### Investments by Location")
                 fig_map = px.scatter_geo(
                     geo_df,
@@ -120,8 +120,9 @@ if uploaded_file is not None:
                 fig_map.update_layout(geo=dict(bgcolor='rgba(0,0,0,0)'))
                 st.plotly_chart(fig_map, use_container_width=True)
             else:
-                st.subheader(":world_map: Geographic Investment Map")
-                st.info("No valid location data to display a map.")
+                st.info("Map data columns are available but contain no valid location data.")
+        else:
+            st.info("No geographic columns found. Add 'Latitude' and 'Longitude' to use the map feature.")
 
         # AI Summary Generator
         st.subheader(":robot_face: AI Summary")
