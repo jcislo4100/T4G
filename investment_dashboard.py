@@ -46,7 +46,7 @@ if uploaded_file is not None:
         selected_fund = st.selectbox("Select Fund", funds)
         df = df if selected_fund == "All" else df[df["Fund Name"] == selected_fund]
 
-        # Date Range Filter (Fixed)
+        # Date Range Filter
         min_date = pd.to_datetime(df["Date"].min()).date()
         max_date = pd.to_datetime(df["Date"].max()).date()
         start_date, end_date = st.slider(
@@ -104,6 +104,35 @@ if uploaded_file is not None:
             stage_df = df.groupby("Stage")["Cost"].sum().reset_index()
             fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=px.colors.sequential.Sunset)
             st.plotly_chart(fig4, use_container_width=True)
+
+        if "City" in df.columns and "State" in df.columns:
+            st.subheader("🗺️ Geographic Investment Map")
+            df_geo = df.copy()
+            df_geo["Location"] = df_geo["City"] + ", " + df_geo["State"]
+            geo_map = px.scatter_geo(
+                df_geo,
+                locations="Location",
+                locationmode="USA-states",
+                scope="usa",
+                color="Fund Name",
+                size="Cost",
+                hover_name="Investment Name",
+                title="Investments by Location",
+                color_discrete_sequence=["#B1874C"]
+            )
+            st.plotly_chart(geo_map, use_container_width=True)
+
+        st.subheader("🧠 AI Summary Generator")
+        high_roi = df[df["Annualized ROI"] > 0.20]
+        low_roi = df[df["Annualized ROI"] < 0]
+        st.write(f"✅ {len(high_roi)} investments have annualized ROI above 20%.")
+        st.write(f"⚠️ {len(low_roi)} investments are currently underperforming (negative ROI).")
+        if len(high_roi) > 0:
+            st.write("Top performing investments:")
+            st.dataframe(high_roi.sort_values("Annualized ROI", ascending=False)[["Investment Name", "Fund Name", "Annualized ROI"]].head())
+        if len(low_roi) > 0:
+            st.write("Underperforming investments:")
+            st.dataframe(low_roi.sort_values("Annualized ROI")[["Investment Name", "Fund Name", "Annualized ROI"]].head())
 
         def highlight(val):
             return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
