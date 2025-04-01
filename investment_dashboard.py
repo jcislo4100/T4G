@@ -43,28 +43,6 @@ if uploaded_file is not None:
         selected_fund = st.selectbox("Select Fund", funds)
         df_filtered = df if selected_fund == "All" else df[df["Fund Name"] == selected_fund]
 
-        # Date Range Filter (Fixed)
-        min_date = pd.to_datetime(df_filtered["Date"].min()).date()
-        max_date = pd.to_datetime(df_filtered["Date"].max()).date()
-        start_date, end_date = st.slider(
-            "Filter by Investment Date",
-            min_value=min_date,
-            max_value=max_date,
-            value=(min_date, max_date)
-        )
-        df_filtered = df_filtered[(df_filtered["Date"].dt.date >= start_date) & (df_filtered["Date"].dt.date <= end_date)]
-
-        # ROI Horizon Filter
-        roi_horizon = st.selectbox("Select ROI Horizon", ["Since Inception", "1 Year", "3 Years", "5 Years"])
-        def calculate_annualized_roi(row, horizon):
-            horizon_days = (today - row["Date"]).days if horizon == "Since Inception" else min((today - row["Date"]).days, int(horizon.split()[0]) * 365)
-            if horizon_days <= 0:
-                return np.nan
-            roi = (row["Fair Value"] - row["Cost"]) / row["Cost"]
-            return roi / (horizon_days / 365.25)
-
-        df_filtered["Annualized ROI"] = df_filtered.apply(lambda row: calculate_annualized_roi(row, roi_horizon), axis=1)
-
         # Portfolio metrics
         total_invested = df_filtered["Cost"].sum()
         total_fair_value = df_filtered["Fair Value"].sum()
@@ -102,9 +80,12 @@ if uploaded_file is not None:
             fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage")
             st.plotly_chart(fig4, use_container_width=True)
 
-        st.subheader(":world_map: Geographic Investment Map")
+        st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
+        cost_value_df = df_filtered.groupby("Date").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
+        fig_cost_value = px.line(cost_value_df, x="Date", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time")
+        st.plotly_chart(fig_cost_value, use_container_width=True)
 
-        # Add estimated coordinates based on known cities
+        st.subheader(":world_map: Geographic Investment Map")
         location_coords = {
             "Cincinnati, OH": (39.1031, -84.5120),
             "Ann Arbor, MI": (42.2808, -83.7430),
@@ -155,7 +136,6 @@ if uploaded_file is not None:
         else:
             st.info("No geographic columns found. Add 'Latitude' and 'Longitude' to use the map feature.")
 
-        # AI Summary Generator
         st.subheader(":robot_face: AI Summary")
         top_roi = df_filtered.sort_values("Annualized ROI", ascending=False).head(3)["Investment Name"].tolist()
         low_roi = df_filtered.sort_values("Annualized ROI", ascending=True).head(3)["Investment Name"].tolist()
