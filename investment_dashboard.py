@@ -21,13 +21,34 @@ if uploaded_file is not None:
         df["Date"] = pd.to_datetime(df["Date"], errors='coerce')
         df = df.dropna(subset=["Date"])
 
-        # MOIC Calculation
-        df["MOIC"] = df["Fair Value"] / df["Cost"]
+        # Date Range Filter
+        min_date = df["Date"].min()
+        max_date = df["Date"].max()
+        start_date, end_date = st.slider("Filter by Investment Date", min_value=min_date, max_value=max_date, value=(min_date, max_date))
+        df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
 
-        # ROI Calculations
+        # ROI Horizon Selector
+        roi_horizon = st.selectbox("Select ROI Horizon", ["Since Inception", "1 Year", "3 Years", "5 Years"])
+        today = pd.Timestamp.today()
+
+        def calculate_annualized_roi(row):
+            cost = row["Cost"]
+            fair_value = row["Fair Value"]
+            if roi_horizon == "Since Inception":
+                days = (today - row["Date"]).days
+            else:
+                years = int(roi_horizon.split()[0])
+                days = min((today - row["Date"]).days, years * 365)
+            if days <= 0:
+                return np.nan
+            roi = (fair_value - cost) / cost
+            return roi / (days / 365.25)
+
+        # MOIC and ROI Calculations
+        df["MOIC"] = df["Fair Value"] / df["Cost"]
         df["ROI"] = (df["Fair Value"] - df["Cost"]) / df["Cost"]
-        df["Holding Years"] = (pd.Timestamp.today() - df["Date"]).dt.days / 365.25
-        df["Annualized ROI"] = df["ROI"] / df["Holding Years"]
+        df["Holding Years"] = (today - df["Date"]).dt.days / 365.25
+        df["Annualized ROI"] = df.apply(calculate_annualized_roi, axis=1)
 
         # Portfolio Summary Metrics
         total_invested = df["Cost"].sum()
@@ -66,6 +87,12 @@ if uploaded_file is not None:
         fig2 = px.bar(roi_by_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund")
         st.plotly_chart(fig2, use_container_width=True)
 
+        # Pie Chart: Capital Allocation by Fund
+        st.subheader("💰 Capital Allocation by Fund")
+        cap_chart = df.groupby("Fund Name")["Cost"].sum().reset_index()
+        fig3 = px.pie(cap_chart, names="Fund Name", values="Cost", title="Capital Invested per Fund")
+        st.plotly_chart(fig3, use_container_width=True)
+
         # Export CSV Button
         st.markdown("### ⬇️ Export")
         csv_buffer = io.StringIO()
@@ -77,7 +104,13 @@ if uploaded_file is not None:
             mime="text/csv"
         )
 
+        # Highlight underperformers
+        def highlight_low(val):
+            return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
+
         # Display Table
         st.markdown("---")
         st.subheader("🔢 Investment Table")
-        st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]])
+        st.dataframe(
+            df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]]
+            .style.applymap(highlight_low, subset=["ROI", "Annualized ROI"])
