@@ -12,9 +12,6 @@ st.markdown("""
         .main { background-color: #f8f9fa; }
         .block-container { padding-top: 2rem; padding-bottom: 2rem; }
         .stDataFrame th { background-color: #f1f1f1; }
-        .metric-label, .metric-value {
-            color: #B1874C !important;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -46,7 +43,7 @@ if uploaded_file is not None:
         selected_fund = st.selectbox("Select Fund", funds)
         df = df if selected_fund == "All" else df[df["Fund Name"] == selected_fund]
 
-        # Date Range Filter
+        # Date Range Filter (Fixed)
         min_date = pd.to_datetime(df["Date"].min()).date()
         max_date = pd.to_datetime(df["Date"].max()).date()
         start_date, end_date = st.slider(
@@ -86,56 +83,45 @@ if uploaded_file is not None:
         st.markdown("---")
         st.subheader("📊 Portfolio MOIC by Fund")
         moic_by_fund = df.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
-        fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text_auto=True, color_discrete_sequence=["#B1874C"])
+        fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text_auto=True)
         st.plotly_chart(fig1, use_container_width=True)
 
         st.subheader("📈 Annualized ROI by Fund")
         roi_fund = df.groupby("Fund Name")["Annualized ROI"].mean().reset_index()
-        fig2 = px.bar(roi_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund", text_auto=".1%", color_discrete_sequence=["#B1874C"])
+        fig2 = px.bar(roi_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund", text_auto=".1%")
         st.plotly_chart(fig2, use_container_width=True)
 
         st.subheader("💰 Capital Allocation by Fund")
         pie_df = df.groupby("Fund Name")["Cost"].sum().reset_index()
-        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund", color_discrete_sequence=px.colors.sequential.Sunset)
+        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund")
         st.plotly_chart(fig3, use_container_width=True)
 
         if "Stage" in df.columns:
             st.subheader("🧬 Investments by Stage")
             stage_df = df.groupby("Stage")["Cost"].sum().reset_index()
-            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=px.colors.sequential.Sunset)
+            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage")
             st.plotly_chart(fig4, use_container_width=True)
 
-        if "City" in df.columns and "State" in df.columns:
-            st.subheader("🗺️ Geographic Investment Map")
-            df_geo = df.dropna(subset=["City", "State"])
-            df_geo["Location"] = df_geo["City"] + ", " + df_geo["State"]
-            if not df_geo.empty:
-                geo_map = px.scatter_geo(
-                    df_geo,
-                    locations="Location",
-                    locationmode="USA-states",
-                    scope="usa",
-                    color="Fund Name",
-                    size="Cost",
+        if "Latitude" in df.columns and "Longitude" in df.columns:
+            geo_df = df.dropna(subset=["Latitude", "Longitude"])
+            if not geo_df.empty:
+                st.subheader("🗺️ Geographic Investment Map")
+                st.markdown("#### Investments by Location")
+                fig_map = px.scatter_geo(
+                    geo_df,
+                    lat="Latitude",
+                    lon="Longitude",
                     hover_name="Investment Name",
-                    title="Investments by Location",
-                    color_discrete_sequence=["#B1874C"]
+                    color="Investment Name",
+                    size="Cost",
+                    projection="albers usa",
+                    color_discrete_sequence=["#B1874C"] * len(geo_df["Investment Name"].unique())
                 )
-                st.plotly_chart(geo_map, use_container_width=True)
+                fig_map.update_layout(geo=dict(bgcolor='rgba(0,0,0,0)'))
+                st.plotly_chart(fig_map, use_container_width=True)
             else:
-                st.info("No valid location data to display a map. Please check your City and State columns.")
-
-        st.subheader("🧠 AI Summary Generator")
-        high_roi = df[df["Annualized ROI"] > 0.20]
-        low_roi = df[df["Annualized ROI"] < 0]
-        st.write(f"✅ {len(high_roi)} investments have annualized ROI above 20%.")
-        st.write(f"⚠️ {len(low_roi)} investments are currently underperforming (negative ROI).")
-        if len(high_roi) > 0:
-            st.write("Top performing investments:")
-            st.dataframe(high_roi.sort_values("Annualized ROI", ascending=False)[["Investment Name", "Fund Name", "Annualized ROI"]].head())
-        if len(low_roi) > 0:
-            st.write("Underperforming investments:")
-            st.dataframe(low_roi.sort_values("Annualized ROI")[["Investment Name", "Fund Name", "Annualized ROI"]].head())
+                st.subheader("🗺️ Geographic Investment Map")
+                st.info("No valid location data to display a map.")
 
         def highlight(val):
             return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
