@@ -43,11 +43,16 @@ if uploaded_file is not None:
         selected_fund = st.selectbox("Select Fund", funds)
         df = df if selected_fund == "All" else df[df["Fund Name"] == selected_fund]
 
-        # Date Range Filter
-        min_date = df["Date"].min()
-        max_date = df["Date"].max()
-        start_date, end_date = st.slider("Filter by Investment Date", min_value=min_date, max_value=max_date, value=(min_date, max_date))
-        df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
+        # Date Range Filter (Fixed)
+        min_date = pd.to_datetime(df["Date"].min()).date()
+        max_date = pd.to_datetime(df["Date"].max()).date()
+        start_date, end_date = st.slider(
+            "Filter by Investment Date",
+            min_value=min_date,
+            max_value=max_date,
+            value=(min_date, max_date)
+        )
+        df = df[(df["Date"].dt.date >= start_date) & (df["Date"].dt.date <= end_date)]
 
         # ROI Horizon Filter
         roi_horizon = st.selectbox("Select ROI Horizon", ["Since Inception", "1 Year", "3 Years", "5 Years"])
