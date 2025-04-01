@@ -28,11 +28,9 @@ if uploaded_file is not None:
         # IRR Calculation Per Investment
         def calc_irr(row):
             try:
-                cash_flows = {
-                    row["Date"]: -row["Cost"],
-                    pd.Timestamp.today(): row["Fair Value"]
-                }
-                return npf.xirr(cash_flows)
+                dates = [row["Date"], pd.Timestamp.today()]
+                cash_flows = [-row["Cost"], row["Fair Value"]]
+                return npf.xirr(dict(zip(dates, cash_flows)))
             except Exception:
                 return np.nan
 
