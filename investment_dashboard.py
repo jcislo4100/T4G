@@ -153,6 +153,9 @@ if uploaded_file is not None:
             st.download_button("⬇️ Click to Save CSV", data=csv, file_name="investment_summary.csv", mime="text/csv")
 
         if download_pdf:
+            import tempfile
+            import os
+
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", size=12)
@@ -174,17 +177,25 @@ if uploaded_file is not None:
             for name in low_roi:
                 pdf.cell(200, 10, txt=f"- {name}", ln=True)
 
-            pdf.ln(10)
-            pdf.cell(200, 10, txt="Investment Breakdown:", ln=True)
-            for _, row in df_filtered.iterrows():
-                name = row['Investment Name']
-                fund = row['Fund Name']
-                cost = row['Cost']
-                value = row['Fair Value']
-                moic = row['MOIC']
-                roi = row['ROI']
-                ann_roi = row['Annualized ROI']
-                pdf.multi_cell(0, 8, txt=f"{name} | Fund: {fund} | Cost: ${cost:,.0f} | Value: ${value:,.0f} | MOIC: {moic:.2f} | ROI: {roi:.2%} | Ann. ROI: {ann_roi:.2%}")
+            # Save plots as images
+            with tempfile.TemporaryDirectory() as tmpdir:
+                fig1_path = os.path.join(tmpdir, "moic_by_fund.png")
+                fig2_path = os.path.join(tmpdir, "roi_by_fund.png")
+                fig3_path = os.path.join(tmpdir, "capital_allocation.png")
+                fig4_path = os.path.join(tmpdir, "investments_by_stage.png")
+                fig_cost_path = os.path.join(tmpdir, "cost_vs_value.png")
 
-            pdf_bytes = pdf.output(dest='S').encode('latin1')
+                fig1.write_image(fig1_path)
+                fig2.write_image(fig2_path)
+                fig3.write_image(fig3_path)
+                if 'fig4' in locals():
+                    fig4.write_image(fig4_path)
+                fig_cost_value.write_image(fig_cost_path)
+
+                for img_path in [fig1_path, fig2_path, fig3_path, fig4_path if 'fig4' in locals() else None, fig_cost_path]:
+                    if img_path and os.path.exists(img_path):
+                        pdf.add_page()
+                        pdf.image(img_path, x=10, w=190)
+
+                pdf_bytes = pdf.output(dest='S').encode('latin1')
             st.download_button("⬇️ Click to Save PDF", data=pdf_bytes, file_name="investment_summary.pdf", mime="application/pdf")
