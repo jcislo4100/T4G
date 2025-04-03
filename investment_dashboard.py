@@ -49,8 +49,13 @@ if uploaded_file is not None:
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds)
 
         df_filtered = df[df["Fund Name"].isin(selected_funds)]
-        if "Realized / Unrealized" in df_filtered.columns and realization_filter != "All":
-            df_filtered = df_filtered[df_filtered["Realized / Unrealized"].str.lower() == realization_filter.lower()]
+        if "Realized / Unrealized" in df.columns and realization_filter != "All":
+            df = df[df["Realized / Unrealized"].str.strip().str.lower() == realization_filter.lower()]
+
+        unique_funds = sorted(df["Fund Name"].dropna().unique())
+        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds)
+
+        df_filtered = df[df["Fund Name"].isin(selected_funds)]
 
         total_invested = df_filtered["Cost"].sum()
         total_fair_value = df_filtered["Fair Value"].sum()
