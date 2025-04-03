@@ -162,5 +162,29 @@ if uploaded_file is not None:
             pdf.cell(200, 10, txt=f"Total Fair Value: ${total_fair_value:,.0f}", ln=True)
             pdf.cell(200, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}", ln=True)
             pdf.cell(200, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
+            pdf.ln(10)
+
+            pdf.set_font("Arial", size=10)
+            pdf.cell(200, 10, txt="Top Performing Investments:", ln=True)
+            for name in top_roi:
+                pdf.cell(200, 10, txt=f"- {name}", ln=True)
+
+            pdf.ln(5)
+            pdf.cell(200, 10, txt="Lowest Performing Investments:", ln=True)
+            for name in low_roi:
+                pdf.cell(200, 10, txt=f"- {name}", ln=True)
+
+            pdf.ln(10)
+            pdf.cell(200, 10, txt="Investment Breakdown:", ln=True)
+            for _, row in df_filtered.iterrows():
+                name = row['Investment Name']
+                fund = row['Fund Name']
+                cost = row['Cost']
+                value = row['Fair Value']
+                moic = row['MOIC']
+                roi = row['ROI']
+                ann_roi = row['Annualized ROI']
+                pdf.multi_cell(0, 8, txt=f"{name} | Fund: {fund} | Cost: ${cost:,.0f} | Value: ${value:,.0f} | MOIC: {moic:.2f} | ROI: {roi:.2%} | Ann. ROI: {ann_roi:.2%}")
+
             pdf_bytes = pdf.output(dest='S').encode('latin1')
             st.download_button("⬇️ Click to Save PDF", data=pdf_bytes, file_name="investment_summary.pdf", mime="application/pdf")
