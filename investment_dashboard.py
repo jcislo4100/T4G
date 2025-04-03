@@ -20,6 +20,11 @@ st.title(":bar_chart: Investment Performance Dashboard")
 
 uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 
+# Realized / Unrealized filter
+st.markdown("### :mag: Filter Investments")
+realization_options = ["All", "Realized", "Unrealized"]
+realization_filter = st.radio("Show Investments:", realization_options, horizontal=True)
+
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
 
@@ -40,6 +45,8 @@ if uploaded_file is not None:
         unique_funds = sorted(df["Fund Name"].dropna().unique())
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds)
         df_filtered = df[df["Fund Name"].isin(selected_funds)]
+        if "Realized / Unrealized" in df.columns and realization_filter != "All":
+            df_filtered = df_filtered[df_filtered["Realized / Unrealized"].str.lower() == realization_filter.lower()]
 
         total_invested = df_filtered["Cost"].sum()
         total_fair_value = df_filtered["Fair Value"].sum()
