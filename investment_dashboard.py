@@ -163,4 +163,4 @@ if uploaded_file is not None:
             pdf.cell(200, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}", ln=True)
             pdf.cell(200, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
             pdf_bytes = pdf.output(dest='S').encode('latin1')
-            st.download_button("⬇️ Click to Save PDF", data=pdf_bytes, file_name="investment_summary.pdf", mime="application/pdf"), file_name="investment_summary.pdf", mime="application/pdf")
+            st.download_button("⬇️ Click to Save PDF", data=pdf_bytes, file_name="investment_summary.pdf", mime="application/pdf")
