@@ -12,6 +12,7 @@ st.set_page_config(layout="wide", page_title="Investment Dashboard", page_icon="
 with st.sidebar:
     st.header("📅 Export Options")
     download_csv = st.button("📄 Download CSV")
+    download_pdf = st.button("🧾 Download PDF")
     st.caption("(PDF download coming soon!)")
 
 st.title(":bar_chart: Investment Performance Dashboard")
