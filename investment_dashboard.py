@@ -4,6 +4,7 @@ import numpy as np
 import numpy_financial as npf
 import plotly.express as px
 from datetime import datetime
+from fpdf import FPDF
 import io
 
 st.set_page_config(layout="wide", page_title="Investment Dashboard", page_icon="📊")
@@ -13,7 +14,7 @@ with st.sidebar:
     st.header("📅 Export Options")
     download_csv = st.button("📄 Download CSV")
     download_pdf = st.button("🧾 Download PDF")
-    st.caption("(PDF download coming soon!)")
+    st.caption("Click a button to generate and download your export.")
 
 st.title(":bar_chart: Investment Performance Dashboard")
 
@@ -149,4 +150,18 @@ if uploaded_file is not None:
 
         if download_csv:
             csv = df_filtered.to_csv(index=False).encode('utf-8')
-            st.download_button("Download CSV", data=csv, file_name="investment_summary.csv", mime="text/csv")
+            st.download_button("⬇️ Click to Save CSV", data=csv, file_name="investment_summary.csv", mime="text/csv")
+
+        if download_pdf:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            pdf.cell(200, 10, txt="Investment Performance Summary", ln=True, align='C')
+            pdf.ln(10)
+            pdf.cell(200, 10, txt=f"Total Invested: ${total_invested:,.0f}", ln=True)
+            pdf.cell(200, 10, txt=f"Total Fair Value: ${total_fair_value:,.0f}", ln=True)
+            pdf.cell(200, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}", ln=True)
+            pdf.cell(200, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
+            pdf_output = io.BytesIO()
+            pdf.output(pdf_output)
+            st.download_button("⬇️ Click to Save PDF", data=pdf_output.getvalue(), file_name="investment_summary.pdf", mime="application/pdf")
