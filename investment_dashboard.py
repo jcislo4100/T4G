@@ -51,9 +51,10 @@ if uploaded_file is not None:
 
         df_filtered = df.copy()
 
-        if "Realized / Unrealized" in df_filtered.columns and realization_filter != "All":
+        if "Realized / Unrealized" in df_filtered.columns:
             df_filtered["Realized / Unrealized"] = df_filtered["Realized / Unrealized"].astype(str).str.strip().str.lower()
-            df_filtered = df_filtered[df_filtered["Realized / Unrealized"] == realization_filter.lower()]
+            if realization_filter != "All":
+                df_filtered = df_filtered[df_filtered["Realized / Unrealized"] == realization_filter.lower()]
 
         df_filtered = df_filtered[df_filtered["Fund Name"].isin(selected_funds)]
 
