@@ -43,10 +43,11 @@ if uploaded_file is not None:
         df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
 
         unique_funds = sorted(df["Fund Name"].dropna().unique())
+        if "Realized / Unrealized" in df.columns and realization_filter != "All":
+        df = df[df["Realized / Unrealized"].str.lower() == realization_filter.lower()]
+
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds)
         df_filtered = df[df["Fund Name"].isin(selected_funds)]
-        if "Realized / Unrealized" in df.columns and realization_filter != "All":
-            df_filtered = df_filtered[df_filtered["Realized / Unrealized"].str.lower() == realization_filter.lower()]
 
         total_invested = df_filtered["Cost"].sum()
         total_fair_value = df_filtered["Fair Value"].sum()
