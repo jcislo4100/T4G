@@ -66,15 +66,14 @@ if uploaded_file is not None:
 
         st.subheader(":moneybag: Capital Allocation by Fund")
         pie_df = df_filtered.groupby("Fund Name")["Cost"].sum().reset_index()
-        gold_gradient = px.colors.sample_colorscale("YlOrBr", [i / max(1, len(pie_df) - 1) for i in range(len(pie_df))])
-        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund", color_discrete_sequence=gold_gradient)
+        gold_shades = ["#A67B43", "#BA905C", "#CEA574", "#E3BA8D", "#F7CFA5", "#FCE9D2", "#FFF5EA"]
+        fig3 = px.pie(pie_df, names="Fund Name", values="Cost", title="Capital Invested per Fund", color_discrete_sequence=gold_shades[:len(pie_df)])
         st.plotly_chart(fig3, use_container_width=True)
 
         if "Stage" in df_filtered.columns:
             st.subheader(":dna: Investments by Stage")
             stage_df = df_filtered.groupby("Stage")["Cost"].sum().reset_index()
-            stage_gradient = px.colors.sample_colorscale("YlOrBr", [i / max(1, len(stage_df) - 1) for i in range(len(stage_df))])
-            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=stage_gradient)
+            fig4 = px.pie(stage_df, names="Stage", values="Cost", title="Investments by Stage", color_discrete_sequence=gold_shades[:len(stage_df)])
             st.plotly_chart(fig4, use_container_width=True)
 
         st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
