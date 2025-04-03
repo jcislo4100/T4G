@@ -44,16 +44,11 @@ if uploaded_file is not None:
 
         
 
-        unique_funds = sorted(df["Fund Name"].dropna().unique())
-
-        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
-
-        df_filtered = df[df["Fund Name"].isin(selected_funds)]
         if "Realized / Unrealized" in df.columns and realization_filter != "All":
             df = df[df["Realized / Unrealized"].str.strip().str.lower() == realization_filter.lower()]
 
         unique_funds = sorted(df["Fund Name"].dropna().unique())
-        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds)
+        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 
         df_filtered = df[df["Fund Name"].isin(selected_funds)]
 
