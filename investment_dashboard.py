@@ -75,13 +75,14 @@ if uploaded_file is not None:
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
             col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
-            col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}")
+            col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}x")
             col4.metric("Annual ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A")
 
             st.markdown("---")
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
             moic_by_fund = df_filtered.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
-            fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text_auto=True, color_discrete_sequence=["#B1874C"] * len(moic_by_fund))
+            moic_by_fund["MOIC Label"] = moic_by_fund["Portfolio MOIC"].round(2).astype(str) + "x"
+            fig1 = px.bar(moic_by_fund, x="Fund Name", y="Portfolio MOIC", title="MOIC per Fund", text="MOIC Label", color_discrete_sequence=["#B1874C"] * len(moic_by_fund))
             st.plotly_chart(fig1, use_container_width=True)
 
             st.subheader(":chart_with_upwards_trend: Annualized ROI by Fund")
@@ -160,8 +161,10 @@ if uploaded_file is not None:
                 st.info("City/State data not found. Add 'City' and 'State' columns to enable map view.")
 
             st.subheader(":robot_face: AI Summary")
-            top_roi = df_filtered.sort_values("Annualized ROI", ascending=False).head(3)["Investment Name"].tolist()
-            low_roi = df_filtered.sort_values("Annualized ROI", ascending=True).head(3)["Investment Name"].tolist()
+            top_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=False).head(3)
+top_roi = top_roi_df["Investment Name"].tolist()
+            low_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=True).head(3)
+low_roi = low_roi_df["Investment Name"].tolist()
             avg_roi = df_filtered["Annualized ROI"].mean()
             st.markdown(f"**Top Performing Investments:** {', '.join(top_roi)}")
             st.markdown(f"**Lowest Performing Investments:** {', '.join(low_roi)}")
@@ -171,7 +174,22 @@ if uploaded_file is not None:
                 return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
 
             st.markdown("### :abacus: Investment Table")
-            st.dataframe(df_filtered[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]].style.applymap(highlight, subset=["ROI", "Annualized ROI"]))
+            df_filtered["MOIC"] = df_filtered["MOIC"].round(2).astype(str) + "x"
+            df_filtered_display = df_filtered.copy()
+            df_filtered_display["Cost"] = df_filtered_display["Cost"].apply(lambda x: f"${x:,.0f}")
+            df_filtered_display["Fair Value"] = df_filtered_display["Fair Value"].apply(lambda x: f"${x:,.0f}")
+            df_filtered_display["ROI"] = df_filtered_display["ROI"].apply(lambda x: f"{x:.2%}")
+            df_filtered_display["Annualized ROI"] = df_filtered_display["Annualized ROI"].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "N/A")
+            summary_row = pd.DataFrame({
+                "Investment Name": ["Total"],
+                "Fund Name": ["-"],
+                "Cost": [f"${df_filtered['Cost'].sum():,.0f}"],
+                "Fair Value": [f"${df_filtered['Fair Value'].sum():,.0f}"],
+                "MOIC": [f"{portfolio_moic:.2f}x"],
+                "ROI": [f"{portfolio_roi:.2%}"],
+                "Annualized ROI": [f"{portfolio_annualized_roi:.2%}" if not np.isnan(portfolio_annualized_roi) else "N/A"]
+            })
+            st.dataframe(pd.concat([df_filtered_display[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]], ignore_index=True).append(summary_row, ignore_index=True))
 
             if download_csv:
                 csv = df_filtered.to_csv(index=False).encode('utf-8')
