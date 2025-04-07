@@ -72,7 +72,7 @@ if uploaded_file is not None:
             portfolio_annualized_roi = portfolio_roi / (total_days / 365.25) if total_days > 0 else np.nan
 
             st.markdown("### :bar_chart: Summary")
-            col1, col2, col3, col4, col5, col6 = st.columns(6)
+            col1, col2, col3, col4, col5 = st.columns(5)
             col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
             col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
             col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}x")
@@ -87,8 +87,7 @@ if uploaded_file is not None:
             tvpi = (realized_distributions + residual_value) / total_invested if total_invested != 0 else np.nan
 
             col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A")
-            col6.metric("TVPI", f"{tvpi:.2f}x" if not np.isnan(tvpi) else "N/A")
-
+            
             st.markdown("---")
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
             moic_by_fund = df_filtered.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
