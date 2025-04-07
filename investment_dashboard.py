@@ -162,9 +162,9 @@ if uploaded_file is not None:
 
             st.subheader(":robot_face: AI Summary")
             top_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=False).head(3)
-top_roi = top_roi_df["Investment Name"].tolist()
+            top_roi = top_roi_df["Investment Name"].tolist()
             low_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=True).head(3)
-low_roi = low_roi_df["Investment Name"].tolist()
+            low_roi = low_roi_df["Investment Name"].tolist()
             avg_roi = df_filtered["Annualized ROI"].mean()
             st.markdown(f"**Top Performing Investments:** {', '.join(top_roi)}")
             st.markdown(f"**Lowest Performing Investments:** {', '.join(low_roi)}")
