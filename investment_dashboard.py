@@ -27,6 +27,7 @@ realization_filter = st.radio("Show Investments:", realization_options, horizont
 
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
+    df.columns = df.columns.str.strip()  # Strip extra whitespace from headers
 
     required_columns = ["Investment Name", "Cost", "Fair Value", "Date", "Fund Name"]
     if not all(col in df.columns for col in required_columns):
@@ -58,10 +59,8 @@ if uploaded_file is not None:
         # Apply Fund Name filter
         df_filtered = df_filtered[df_filtered["Fund Name"].isin(selected_funds)]
 
-        # Reset index after filtering (debug step)
         df_filtered = df_filtered.reset_index(drop=True)
 
-        # Safety check for empty result
         if df_filtered.empty:
             st.warning("No investments match the selected filters.")
         else:
@@ -106,6 +105,59 @@ if uploaded_file is not None:
             cost_value_df = df_filtered.groupby("Date").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
             fig_cost_value = px.line(cost_value_df, x="Date", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
             st.plotly_chart(fig_cost_value, use_container_width=True)
+
+            # ✅ NEW: Location Heatmap at Bottom
+            st.subheader(":world_map: Investment HQ Heatmap")
+            if "City" in df_filtered.columns and "State" in df_filtered.columns:
+                df_filtered["CityState"] = df_filtered["City"].str.strip() + ", " + df_filtered["State"].str.strip()
+
+                # Coordinates for basic cities (customize as needed)
+                coords_dict = {
+                    "Cincinnati, OH": (39.1031, -84.5120),
+                    "Ann Arbor, MI": (42.2808, -83.7430),
+                    "San Francisco, CA": (37.7749, -122.4194),
+                    "Cleveland, OH": (41.4993, -81.6944),
+                    "Chicago, IL": (41.8781, -87.6298),
+                    "Lansing, MI": (42.7325, -84.5555),
+                    "Boston, MA": (42.3601, -71.0589),
+                    "Grand Rapids, MI": (42.9634, -85.6681),
+                    "Brooklyn, NY": (40.6782, -73.9442),
+                    "Miami, FL": (25.7617, -80.1918),
+                    "New York, NY": (40.7128, -74.0060),
+                    "Nashville, TN": (36.1627, -86.7816),
+                    "Waco, TX": (31.5493, -97.1467),
+                    "Sunnyvale, CA": (37.3688, -122.0363),
+                    "Hawthorne, NY": (41.1076, -73.7954),
+                    "Boulder, CO": (40.01499, -105.2705),
+                    "Palo Alto, CA": (37.4419, -122.1430),
+                    "Oakland, CA": (37.8044, -122.2711),
+                    "Carlsbad, CA": (33.1581, -117.3506),
+                    "Tampa, FL": (27.9506, -82.4572),
+                    "Columbus, OH": (39.9612, -82.9988)
+                }
+
+                df_filtered["Latitude"] = df_filtered["CityState"].map(lambda x: coords_dict.get(x, (np.nan, np.nan))[0])
+                df_filtered["Longitude"] = df_filtered["CityState"].map(lambda x: coords_dict.get(x, (np.nan, np.nan))[1])
+
+                geo_df = df_filtered.dropna(subset=["Latitude", "Longitude"])
+
+                if not geo_df.empty:
+                    fig_map = px.scatter_geo(
+                        geo_df,
+                        lat="Latitude",
+                        lon="Longitude",
+                        hover_name="Investment Name",
+                        color="Investment Name",
+                        size="Cost",
+                        projection="albers usa",
+                        color_discrete_sequence=["#B1874C"] * len(geo_df["Investment Name"].unique())
+                    )
+                    fig_map.update_layout(geo=dict(bgcolor='rgba(0,0,0,0)'))
+                    st.plotly_chart(fig_map, use_container_width=True)
+                else:
+                    st.info("Map data columns exist but contain no usable location data.")
+            else:
+                st.info("City/State data not found. Add 'City' and 'State' columns to enable map view.")
 
             st.subheader(":robot_face: AI Summary")
             top_roi = df_filtered.sort_values("Annualized ROI", ascending=False).head(3)["Investment Name"].tolist()
