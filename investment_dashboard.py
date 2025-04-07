@@ -72,11 +72,22 @@ if uploaded_file is not None:
             portfolio_annualized_roi = portfolio_roi / (total_days / 365.25) if total_days > 0 else np.nan
 
             st.markdown("### :bar_chart: Summary")
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
             col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
             col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
             col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}x")
             col4.metric("Annual ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A")
+
+            realized_df = df_filtered[df_filtered["Realized / Unrealized"] == "realized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
+            unrealized_df = df_filtered[df_filtered["Realized / Unrealized"] == "unrealized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
+
+            realized_distributions = realized_df["Fair Value"].sum() if not realized_df.empty else 0
+            residual_value = unrealized_df["Fair Value"].sum() if not unrealized_df.empty else 0
+            dpi = realized_distributions / total_invested if total_invested != 0 else np.nan
+            tvpi = (realized_distributions + residual_value) / total_invested if total_invested != 0 else np.nan
+
+            col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A")
+            col6.metric("TVPI", f"{tvpi:.2f}x" if not np.isnan(tvpi) else "N/A") else "N/A")
 
             st.markdown("---")
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
