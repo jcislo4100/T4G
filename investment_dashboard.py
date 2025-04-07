@@ -233,50 +233,59 @@ if uploaded_file is not None:
                 from PIL import Image
                 import plotly.io as pio
                 import os
+                import tempfile
 
-                buffer_dir = "/tmp/pdf_charts"
-                os.makedirs(buffer_dir, exist_ok=True)
+                pio.kaleido.scope.default_format = "png"
 
+                buffer_dir = tempfile.mkdtemp()
                 chart_paths = []
-                for i, fig in enumerate([fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value, fig_map if 'fig_map' in locals() else None]):
+                chart_titles = ["MOIC by Fund", "Annualized ROI by Fund", "Capital Allocation", "Stage Breakdown", "Cost vs Fair Value Over Time", "Investment HQ Map"]
+
+                figs = [fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value, fig_map if 'fig_map' in locals() else None]
+
+                for i, fig in enumerate(figs):
                     if fig:
                         path = os.path.join(buffer_dir, f"chart_{i}.png")
-                        pio.write_image(fig, path, format='png')
-                        chart_paths.append(path)
+                        pio.write_image(fig, path, format='png', width=1000, height=600)
+                        chart_paths.append((chart_titles[i], path))
 
                 pdf = FPDF()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 pdf.add_page()
+                logo_path = "/mnt/data/4100-emblem-block-logo.jpg"
+                if os.path.exists(logo_path):
+                    pdf.image(logo_path, x=10, y=8, w=30)
+                pdf.set_y(30)
 
-                # Header
-                pdf.set_font("Arial", 'B', 16)
-                pdf.set_text_color(40, 40, 40)
-                pdf.cell(200, 10, txt="Investment Dashboard Report", ln=True, align="C")
-                pdf.ln(6)
+                # Cover
+                pdf.set_font("Arial", 'B', 20)
+                pdf.set_text_color(30, 30, 30)
+                pdf.cell(200, 20, txt="Investment Dashboard Report", ln=True, align="C")
+                pdf.ln(10)
 
-                # Summary Metrics
+                # Summary
                 pdf.set_font("Arial", '', 12)
+                pdf.set_text_color(0, 0, 0)
                 pdf.cell(0, 10, txt=f"Total Invested: ${total_invested:,.0f}", ln=True)
                 pdf.cell(0, 10, txt=f"Total Fair Value: ${total_fair_value:,.0f}", ln=True)
                 pdf.cell(0, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}x", ln=True)
                 pdf.cell(0, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
-                pdf.ln(6)
+                pdf.ln(5)
 
-                # Filter Settings
                 pdf.set_font("Arial", 'I', 10)
                 pdf.set_text_color(100, 100, 100)
                 pdf.cell(0, 10, txt=f"Filtered Funds: {', '.join(selected_funds)}", ln=True)
                 pdf.cell(0, 10, txt=f"Investment Status: {realization_filter}", ln=True)
                 pdf.set_text_color(0, 0, 0)
                 pdf.ln(10)
-                pdf.ln(10)
 
-                for path in chart_paths:
+                for title, path in chart_paths:
+                    pdf.add_page()
+                    pdf.set_font("Arial", 'B', 14)
+                    pdf.cell(0, 10, title, ln=True)
                     pdf.image(path, w=180)
-                    pdf.ln(10)
+                    pdf.ln(8)
 
                 pdf_output = os.path.join(buffer_dir, "investment_report.pdf")
                 pdf.output(pdf_output)
-
-                with open(pdf_output, "rb") as f:
                     st.download_button("⬇️ Download PDF Report", data=f, file_name="investment_report.pdf", mime="application/pdf")
