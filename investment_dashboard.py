@@ -11,9 +11,9 @@ st.set_page_config(layout="wide", page_title="Investment Dashboard", page_icon="
 
 # Sidebar menu for export options
 with st.sidebar:
-    st.header("📅 Export Options")
+    st.header("🗕️ Export Options")
     download_csv = st.button("📄 Download CSV")
-    download_pdf = st.button("🧾 Download PDF")
+    download_pdf = st.button("🩾 Download PDF")
     st.caption("Click a button to generate and download your export.")
 
 st.title(":bar_chart: Investment Performance Dashboard")
@@ -42,15 +42,11 @@ if uploaded_file is not None:
         df["ROI"] = (df["Fair Value"] - df["Cost"]) / df["Cost"]
         df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
 
-        
-
-        
-
         unique_funds = sorted(df["Fund Name"].dropna().unique())
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 
+        # Apply filters (FIXED)
         df_filtered = df.copy()
-
         if "Realized / Unrealized" in df_filtered.columns:
             df_filtered["Realized / Unrealized"] = df_filtered["Realized / Unrealized"].astype(str).str.strip().str.lower()
             if realization_filter != "All":
@@ -100,57 +96,6 @@ if uploaded_file is not None:
         fig_cost_value = px.line(cost_value_df, x="Date", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
         st.plotly_chart(fig_cost_value, use_container_width=True)
 
-        st.subheader(":world_map: Geographic Investment Map")
-        location_coords = {
-            "Cincinnati, OH": (39.1031, -84.5120),
-            "Ann Arbor, MI": (42.2808, -83.7430),
-            "San Francisco, CA": (37.7749, -122.4194),
-            "Cleveland, OH": (41.4993, -81.6944),
-            "Chicago, IL": (41.8781, -87.6298),
-            "Lansing, MI": (42.7325, -84.5555),
-            "Boston, MA": (42.3601, -71.0589),
-            "Grand Rapids, MI": (42.9634, -85.6681),
-            "Brooklyn, NY": (40.6782, -73.9442),
-            "Miami, FL": (25.7617, -80.1918),
-            "New York, NY": (40.7128, -74.0060),
-            "Nashville, TN": (36.1627, -86.7816),
-            "Waco, TX": (31.5493, -97.1467),
-            "Sunnyvale, CA": (37.3688, -122.0363),
-            "Hawthorne, NY": (41.1076, -73.7954),
-            "Boulder, CO": (40.01499, -105.2705),
-            "Palo Alto, CA": (37.4419, -122.1430),
-            "Oakland, CA": (37.8044, -122.2711),
-            "Carlsbad, CA": (33.1581, -117.3506),
-            "Tampa, FL": (27.9506, -82.4572),
-            "Columbus, OH": (39.9612, -82.9988)
-        }
-
-        if "City" in df_filtered.columns and "State" in df_filtered.columns:
-            df_filtered["CityState"] = df_filtered["City"].str.strip() + ", " + df_filtered["State"].str.strip()
-            df_filtered["Latitude"] = df_filtered["CityState"].map(lambda x: location_coords.get(x, (np.nan, np.nan))[0])
-            df_filtered["Longitude"] = df_filtered["CityState"].map(lambda x: location_coords.get(x, (np.nan, np.nan))[1])
-
-        if "Latitude" in df_filtered.columns and "Longitude" in df_filtered.columns:
-            geo_df = df_filtered.dropna(subset=["Latitude", "Longitude"])
-            if not geo_df.empty:
-                st.markdown("#### Investments by Location")
-                fig_map = px.scatter_geo(
-                    geo_df,
-                    lat="Latitude",
-                    lon="Longitude",
-                    hover_name="Investment Name",
-                    color="Investment Name",
-                    size="Cost",
-                    projection="albers usa",
-                    color_discrete_sequence=["#B1874C"] * len(geo_df["Investment Name"].unique())
-                )
-                fig_map.update_layout(geo=dict(bgcolor='rgba(0,0,0,0)'))
-                st.plotly_chart(fig_map, use_container_width=True)
-            else:
-                st.info("Map data columns are available but contain no valid location data.")
-        else:
-            st.info("No geographic columns found. Add 'Latitude' and 'Longitude' to use the map feature.")
-
         st.subheader(":robot_face: AI Summary")
         top_roi = df_filtered.sort_values("Annualized ROI", ascending=False).head(3)["Investment Name"].tolist()
         low_roi = df_filtered.sort_values("Annualized ROI", ascending=True).head(3)["Investment Name"].tolist()
@@ -168,51 +113,3 @@ if uploaded_file is not None:
         if download_csv:
             csv = df_filtered.to_csv(index=False).encode('utf-8')
             st.download_button("⬇️ Click to Save CSV", data=csv, file_name="investment_summary.csv", mime="text/csv")
-
-        if download_pdf:
-            import tempfile
-            import os
-
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            pdf.cell(200, 10, txt="Investment Performance Summary", ln=True, align='C')
-            pdf.ln(10)
-            pdf.cell(200, 10, txt=f"Total Invested: ${total_invested:,.0f}", ln=True)
-            pdf.cell(200, 10, txt=f"Total Fair Value: ${total_fair_value:,.0f}", ln=True)
-            pdf.cell(200, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}", ln=True)
-            pdf.cell(200, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
-            pdf.ln(10)
-
-            pdf.set_font("Arial", size=10)
-            pdf.cell(200, 10, txt="Top Performing Investments:", ln=True)
-            for name in top_roi:
-                pdf.cell(200, 10, txt=f"- {name}", ln=True)
-
-            pdf.ln(5)
-            pdf.cell(200, 10, txt="Lowest Performing Investments:", ln=True)
-            for name in low_roi:
-                pdf.cell(200, 10, txt=f"- {name}", ln=True)
-
-            # Save plots as images
-            with tempfile.TemporaryDirectory() as tmpdir:
-                fig1_path = os.path.join(tmpdir, "moic_by_fund.png")
-                fig2_path = os.path.join(tmpdir, "roi_by_fund.png")
-                fig3_path = os.path.join(tmpdir, "capital_allocation.png")
-                fig4_path = os.path.join(tmpdir, "investments_by_stage.png")
-                fig_cost_path = os.path.join(tmpdir, "cost_vs_value.png")
-
-                fig1.write_image(fig1_path)
-                fig2.write_image(fig2_path)
-                fig3.write_image(fig3_path)
-                if 'fig4' in locals():
-                    fig4.write_image(fig4_path)
-                fig_cost_value.write_image(fig_cost_path)
-
-                for img_path in [fig1_path, fig2_path, fig3_path, fig4_path if 'fig4' in locals() else None, fig_cost_path]:
-                    if img_path and os.path.exists(img_path):
-                        pdf.add_page()
-                        pdf.image(img_path, x=10, w=190)
-
-                pdf_bytes = pdf.output(dest='S').encode('latin1')
-            st.download_button("⬇️ Click to Save PDF", data=pdf_bytes, file_name="investment_summary.pdf", mime="application/pdf")
