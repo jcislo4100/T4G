@@ -247,8 +247,28 @@ if uploaded_file is not None:
                 pdf = FPDF()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 pdf.add_page()
-                pdf.set_font("Arial", size=12)
+
+                # Header
+                pdf.set_font("Arial", 'B', 16)
+                pdf.set_text_color(40, 40, 40)
                 pdf.cell(200, 10, txt="Investment Dashboard Report", ln=True, align="C")
+                pdf.ln(6)
+
+                # Summary Metrics
+                pdf.set_font("Arial", '', 12)
+                pdf.cell(0, 10, txt=f"Total Invested: ${total_invested:,.0f}", ln=True)
+                pdf.cell(0, 10, txt=f"Total Fair Value: ${total_fair_value:,.0f}", ln=True)
+                pdf.cell(0, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}x", ln=True)
+                pdf.cell(0, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
+                pdf.ln(6)
+
+                # Filter Settings
+                pdf.set_font("Arial", 'I', 10)
+                pdf.set_text_color(100, 100, 100)
+                pdf.cell(0, 10, txt=f"Filtered Funds: {', '.join(selected_funds)}", ln=True)
+                pdf.cell(0, 10, txt=f"Investment Status: {realization_filter}", ln=True)
+                pdf.set_text_color(0, 0, 0)
+                pdf.ln(10)
                 pdf.ln(10)
 
                 for path in chart_paths:
