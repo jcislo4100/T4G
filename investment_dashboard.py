@@ -87,7 +87,7 @@ if uploaded_file is not None:
             tvpi = (realized_distributions + residual_value) / total_invested if total_invested != 0 else np.nan
 
             col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A")
-            col6.metric("TVPI", f"{tvpi:.2f}x" if not np.isnan(tvpi) else "N/A") else "N/A")
+            col6.metric("TVPI", f"{tvpi:.2f}x" if not np.isnan(tvpi) else "N/A")
 
             st.markdown("---")
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
