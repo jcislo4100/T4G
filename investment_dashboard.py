@@ -292,14 +292,44 @@ if uploaded_file is not None:
                 pdf.cell(0, 10, "Investment Table", ln=True)
                 pdf.set_font("Arial", '', 10)
                 col_headers = ["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "Annualized ROI"]
-                col_widths = [35, 50, 25, 30, 20, 20]
+                col_widths = [40, 50, 25, 30, 20, 45]
                 for i, header in enumerate(col_headers):
                     pdf.cell(col_widths[i], 10, header, border=1)
                 pdf.ln()
                 for _, row in df_with_total.iterrows():
                     for i, col in enumerate(col_headers):
                         cell_text = str(row[col])[:20]
-                        pdf.cell(col_widths[i], 10, cell_text, border=1)
+                        bg_color = None
+
+                        if col == "MOIC":
+                            try:
+                                moic_val = float(row[col].replace("x", ""))
+                                if moic_val >= 2:
+                                    bg_color = (212, 237, 218)  # green
+                                elif moic_val >= 1:
+                                    bg_color = (255, 243, 205)  # yellow
+                                else:
+                                    bg_color = (248, 215, 218)  # red
+                            except:
+                                pass
+
+                        if col == "Annualized ROI":
+                            try:
+                                roi_val = float(row[col].replace("%", "")) / 100
+                                if roi_val >= 0.20:
+                                    bg_color = (212, 237, 218)
+                                elif roi_val >= 0.10:
+                                    bg_color = (255, 243, 205)
+                                else:
+                                    bg_color = (248, 215, 218)
+                            except:
+                                pass
+
+                        if bg_color:
+                            pdf.set_fill_color(*bg_color)
+                            pdf.cell(col_widths[i], 10, cell_text, border=1, fill=True)
+                        else:
+                            pdf.cell(col_widths[i], 10, cell_text, border=1)
                     pdf.ln()
 
                 pdf_output = os.path.join(buffer_dir, "investment_report.pdf")
