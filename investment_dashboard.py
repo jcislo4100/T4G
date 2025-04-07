@@ -44,7 +44,15 @@ if uploaded_file is not None:
         df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
 
         unique_funds = sorted(df["Fund Name"].dropna().unique())
-        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
+        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector", label_visibility="visible")
+        st.markdown("""
+            <style>
+            .stMultiSelect [data-baseweb="tag"] {
+                background-color: #cce6ff !important;
+                color: black;
+            }
+            </style>
+        """, unsafe_allow_html=True)
 
         # Apply filters (FIXED + DEBUGGED)
         df_filtered = df.copy()
