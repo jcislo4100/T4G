@@ -44,15 +44,7 @@ if uploaded_file is not None:
         df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
 
         unique_funds = sorted(df["Fund Name"].dropna().unique())
-        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector", label_visibility="visible")
-        st.markdown("""
-            <style>
-            .stMultiSelect [data-baseweb="tag"] {
-                background-color: #cce6ff !important;
-                color: black;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 
         # Apply filters (FIXED + DEBUGGED)
         df_filtered = df.copy()
@@ -206,7 +198,32 @@ if uploaded_file is not None:
                 df_filtered_display[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]],
                 summary_row
             ], ignore_index=True)
-            st.dataframe(df_with_total)
+            def style_moic(val):
+                try:
+                    val_float = float(val.replace("x", ""))
+                    if val_float >= 2:
+                        return "background-color: #d4edda"  # green
+                    elif val_float >= 1:
+                        return "background-color: #fff3cd"  # yellow
+                    else:
+                        return "background-color: #f8d7da"  # red
+                except:
+                    return ""
+
+            def style_roi(val):
+                try:
+                    val_float = float(val.strip('%')) / 100
+                    if val_float >= 0.20:
+                        return "background-color: #d4edda"
+                    elif val_float >= 0.10:
+                        return "background-color: #fff3cd"
+                    else:
+                        return "background-color: #f8d7da"
+                except:
+                    return ""
+
+            styled_df = df_with_total.style.applymap(style_moic, subset=["MOIC"]).applymap(style_roi, subset=["ROI"])
+            st.dataframe(styled_df)
 
             if download_csv:
                 csv = df_filtered.to_csv(index=False).encode('utf-8')
