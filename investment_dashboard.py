@@ -114,6 +114,11 @@ if uploaded_file is not None:
 
                 # Coordinates for basic cities (customize as needed)
                 coords_dict = {
+                    "Menlo Park, CA": (37.452959, -122.181725),
+                    "Mountain View, CA": (37.3861, -122.0839),
+                    "Newport Beach, CA": (33.6189, -117.9298),
+                    "Providence, RI": (41.8240, -71.4128),
+                    "Harris County, TX": (29.8579, -95.3936),
                     "Cincinnati, OH": (39.1031, -84.5120),
                     "Ann Arbor, MI": (42.2808, -83.7430),
                     "San Francisco, CA": (37.7749, -122.4194),
