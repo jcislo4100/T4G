@@ -288,4 +288,6 @@ if uploaded_file is not None:
 
                 pdf_output = os.path.join(buffer_dir, "investment_report.pdf")
                 pdf.output(pdf_output)
+
+                with open(pdf_output, "rb") as f:
                     st.download_button("⬇️ Download PDF Report", data=f, file_name="investment_report.pdf", mime="application/pdf")
