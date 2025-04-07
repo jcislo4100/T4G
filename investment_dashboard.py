@@ -292,7 +292,7 @@ if uploaded_file is not None:
                 pdf.cell(0, 10, "Investment Table", ln=True)
                 pdf.set_font("Arial", '', 10)
                 col_headers = ["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "Annualized ROI"]
-                col_widths = [35, 50, 25, 30, 20, 40]
+                col_widths = [35, 50, 25, 30, 20, 20]
                 for i, header in enumerate(col_headers):
                     pdf.cell(col_widths[i], 10, header, border=1)
                 pdf.ln()
