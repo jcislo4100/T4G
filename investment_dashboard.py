@@ -198,3 +198,35 @@ if uploaded_file is not None:
             if download_csv:
                 csv = df_filtered.to_csv(index=False).encode('utf-8')
                 st.download_button("⬇️ Click to Save CSV", data=csv, file_name="investment_summary.csv", mime="text/csv")
+
+            if download_pdf:
+                from PIL import Image
+                import plotly.io as pio
+                import os
+
+                buffer_dir = "/tmp/pdf_charts"
+                os.makedirs(buffer_dir, exist_ok=True)
+
+                chart_paths = []
+                for i, fig in enumerate([fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value, fig_map if 'fig_map' in locals() else None]):
+                    if fig:
+                        path = os.path.join(buffer_dir, f"chart_{i}.png")
+                        pio.write_image(fig, path, format='png')
+                        chart_paths.append(path)
+
+                pdf = FPDF()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                pdf.cell(200, 10, txt="Investment Dashboard Report", ln=True, align="C")
+                pdf.ln(10)
+
+                for path in chart_paths:
+                    pdf.image(path, w=180)
+                    pdf.ln(10)
+
+                pdf_output = os.path.join(buffer_dir, "investment_report.pdf")
+                pdf.output(pdf_output)
+
+                with open(pdf_output, "rb") as f:
+                    st.download_button("⬇️ Download PDF Report", data=f, file_name="investment_report.pdf", mime="application/pdf")
