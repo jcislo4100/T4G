@@ -189,7 +189,11 @@ if uploaded_file is not None:
                 "ROI": [f"{portfolio_roi:.2%}"],
                 "Annualized ROI": [f"{portfolio_annualized_roi:.2%}" if not np.isnan(portfolio_annualized_roi) else "N/A"]
             })
-            st.dataframe(pd.concat([df_filtered_display[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]], ignore_index=True).append(summary_row, ignore_index=True))
+            df_with_total = pd.concat([
+                df_filtered_display[["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]],
+                summary_row
+            ], ignore_index=True)
+            st.dataframe(df_with_total)
 
             if download_csv:
                 csv = df_filtered.to_csv(index=False).encode('utf-8')
