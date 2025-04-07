@@ -252,10 +252,7 @@ if uploaded_file is not None:
                 pdf = FPDF()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 pdf.add_page()
-                logo_path = "/mnt/data/4100-emblem-block-logo.jpg"
-                if os.path.exists(logo_path):
-                    pdf.image(logo_path, x=10, y=8, w=30)
-                pdf.set_y(30)
+                
 
                 # Cover
                 pdf.set_font("Arial", 'B', 20)
@@ -279,11 +276,15 @@ if uploaded_file is not None:
                 pdf.set_text_color(0, 0, 0)
                 pdf.ln(10)
 
-                for title, path in chart_paths:
+                for i in range(0, len(chart_paths), 2):
                     pdf.add_page()
-                    pdf.set_font("Arial", 'B', 14)
-                    pdf.cell(0, 10, title, ln=True)
-                    pdf.image(path, w=180)
+                    charts = chart_paths[i:i+2]
+                    for j, (title, path) in enumerate(charts):
+                        pdf.set_font("Arial", 'B', 14)
+                        y_offset = 10 + j * 140
+                        pdf.set_y(y_offset)
+                        pdf.cell(0, 10, title, ln=True)
+                        pdf.image(path, x=10, y=y_offset + 10, w=180)
                     pdf.ln(8)
 
                 pdf_output = os.path.join(buffer_dir, "investment_report.pdf")
