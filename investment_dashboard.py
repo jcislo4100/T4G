@@ -287,6 +287,21 @@ if uploaded_file is not None:
                         pdf.image(path, x=10, y=y_offset + 10, w=180)
                     pdf.ln(8)
 
+                pdf.add_page()
+                pdf.set_font("Arial", 'B', 14)
+                pdf.cell(0, 10, "Investment Table", ln=True)
+                pdf.set_font("Arial", '', 10)
+                col_headers = ["Investment Name", "Fund Name", "Cost", "Fair Value", "MOIC", "ROI", "Annualized ROI"]
+                col_widths = [35, 30, 25, 30, 20, 20, 30]
+                for i, header in enumerate(col_headers):
+                    pdf.cell(col_widths[i], 10, header, border=1)
+                pdf.ln()
+                for _, row in df_with_total.iterrows():
+                    for i, col in enumerate(col_headers):
+                        cell_text = str(row[col])[:20]
+                        pdf.cell(col_widths[i], 10, cell_text, border=1)
+                    pdf.ln()
+
                 pdf_output = os.path.join(buffer_dir, "investment_report.pdf")
                 pdf.output(pdf_output)
 
