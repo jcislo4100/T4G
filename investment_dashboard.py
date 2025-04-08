@@ -198,10 +198,8 @@ if uploaded_file is not None:
             top_roi = top_roi_df["Investment Name"].tolist()
             low_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=True).head(3)
             low_roi = low_roi_df["Investment Name"].tolist()
-            avg_roi = df_filtered["Annualized ROI"].mean()
             st.markdown(f"**Top Performing Investments:** {', '.join(top_roi)}")
             st.markdown(f"**Lowest Performing Investments:** {', '.join(low_roi)}")
-            st.markdown(f"**Average Annualized ROI:** {avg_roi:.2%}")
 
             def highlight(val):
                 return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
