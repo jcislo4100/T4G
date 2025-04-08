@@ -22,6 +22,8 @@ uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 
 # Realized / Unrealized filter
 st.markdown("### :mag: Filter Investments")
+unique_funds = sorted(df["Fund Name"].dropna().unique())
+selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 realization_options = ["All", "Realized", "Unrealized"]
 realization_filter = st.radio("Show Investments:", realization_options, horizontal=True)
 
