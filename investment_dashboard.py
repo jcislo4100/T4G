@@ -50,6 +50,10 @@ if uploaded_file is not None:
         unique_funds = sorted(df["Fund Name"].dropna().unique())
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 
+        # 🔄 Reset Filters Button
+        if st.button("🔄 Reset Filters"):
+            st.experimental_rerun()
+
         # Apply filters (FIXED + DEBUGGED)
         df_filtered = df.copy()
 
@@ -64,6 +68,11 @@ if uploaded_file is not None:
         df_filtered = df_filtered[df_filtered["Fund Name"].isin(selected_funds)]
 
         df_filtered = df_filtered.reset_index(drop=True)
+
+        # 🔍 Add search bar for investment name
+        search_term = st.text_input("Search Investments by Name")
+        if search_term:
+            df_filtered = df_filtered[df_filtered["Investment Name"].str.contains(search_term, case=False, na=False)]
 
         if df_filtered.empty:
             st.warning("No investments match the selected filters.")
@@ -81,10 +90,10 @@ if uploaded_file is not None:
 
             st.markdown("### :bar_chart: Summary")
             col1, col2, col3, col4, col5 = st.columns(5)
-            col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
-            col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
-            col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}x")
-            col4.metric("Portfolio-Level ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A")
+            col1.metric("Total Amount Invested", f"${total_invested:,.0f}", help="Sum of all capital deployed across filtered investments.")
+            col2.metric("Total Fair Value", f"${total_fair_value:,.0f}", help="Current estimated value of all filtered investments.")
+            col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}x", help="Multiple on Invested Capital (Fair Value / Cost)")
+            col4.metric("Portfolio-Level ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A", help="Annualized return across all investments, weighted by capital")
 
             realized_df = df_filtered[df_filtered["Realized / Unrealized"] == "realized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
             unrealized_df = df_filtered[df_filtered["Realized / Unrealized"] == "unrealized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
@@ -94,7 +103,7 @@ if uploaded_file is not None:
             dpi = realized_distributions / total_invested if total_invested != 0 else np.nan
             tvpi = (realized_distributions + residual_value) / total_invested if total_invested != 0 else np.nan
 
-            col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A")
+            col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A", help="Distributed to Paid-In Capital: Realized cash returns relative to total invested")
             
             st.markdown("---")
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
