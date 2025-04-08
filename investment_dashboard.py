@@ -277,6 +277,7 @@ if uploaded_file is not None:
                 pdf.cell(0, 10, txt=f"Total Fair Value: ${total_fair_value:,.0f}", ln=True)
                 pdf.cell(0, 10, txt=f"Portfolio MOIC: {portfolio_moic:.2f}x", ln=True)
                 pdf.cell(0, 10, txt=f"Annualized ROI: {portfolio_annualized_roi:.2%}", ln=True)
+                pdf.cell(0, 10, txt=f"DPI: {dpi:.2f}x" if not np.isnan(dpi) else "DPI: N/A", ln=True)
                 pdf.ln(5)
 
                 pdf.set_font("Arial", 'I', 10)
