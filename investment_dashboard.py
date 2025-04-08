@@ -65,11 +65,6 @@ if uploaded_file is not None:
 
         df_filtered = df_filtered.reset_index(drop=True)
 
-        # ✅ Search Filter
-        search_term = st.text_input("🔍 Search by Investment Name")
-        if search_term:
-            df_filtered = df_filtered[df_filtered["Investment Name"].str.contains(search_term, case=False, na=False)]
-
         if df_filtered.empty:
             st.warning("No investments match the selected filters.")
         else:
@@ -367,4 +362,3 @@ if uploaded_file is not None:
 
                 with open(pdf_output, "rb") as f:
                     st.download_button("⬇️ Download PDF Report", data=f, file_name="investment_report.pdf", mime="application/pdf")
-
