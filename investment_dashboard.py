@@ -41,7 +41,11 @@ if uploaded_file is not None:
 
         today = pd.Timestamp.today()
         df["ROI"] = (df["Fair Value"] - df["Cost"]) / df["Cost"]
-        df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
+        df["Years Held"] = (today - df["Date"]).dt.days / 365.25
+        df["Annualized ROI"] = df.apply(
+            lambda row: (row["MOIC"] ** (1 / row["Years Held"]) - 1) if row["Years Held"] > 0 else np.nan,
+            axis=1
+        )
 
         unique_funds = sorted(df["Fund Name"].dropna().unique())
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
@@ -69,7 +73,11 @@ if uploaded_file is not None:
             portfolio_moic = total_fair_value / total_invested if total_invested != 0 else 0
             portfolio_roi = (total_fair_value - total_invested) / total_invested
             total_days = (today - df_filtered["Date"].min()).days
-            portfolio_annualized_roi = portfolio_roi / (total_days / 365.25) if total_days > 0 else np.nan
+            df_filtered["Weighted Annualized ROI Contribution"] = df_filtered.apply(
+                lambda row: row["Annualized ROI"] * row["Cost"] if pd.notnull(row["Annualized ROI"]) else 0,
+                axis=1
+            )
+            portfolio_annualized_roi = df_filtered["Weighted Annualized ROI Contribution"].sum() / df_filtered["Cost"].sum()
 
             st.markdown("### :bar_chart: Summary")
             col1, col2, col3, col4, col5 = st.columns(5)
