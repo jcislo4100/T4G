@@ -96,8 +96,18 @@ if uploaded_file is not None:
             st.plotly_chart(fig1, use_container_width=True)
 
             st.subheader(":chart_with_upwards_trend: Annualized ROI by Fund")
-            roi_fund = df_filtered.groupby("Fund Name").apply(lambda x: np.average(x["Annualized ROI"], weights=x["Cost"]) if x["Cost"].sum() > 0 else np.nan).reset_index(name="Annualized ROI")
-            fig2 = px.bar(roi_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund", text_auto=".1%", color_discrete_sequence=["#B1874C"] * len(roi_fund))
+            roi_fund = df_filtered.groupby("Fund Name").apply(
+                lambda x: np.average(x["Annualized ROI"], weights=x["Cost"]) if x["Cost"].sum() > 0 else np.nan
+            ).reset_index(name="Weighted Annualized ROI")
+            roi_fund["Annualized ROI Label"] = roi_fund["Weighted Annualized ROI"].apply(lambda x: f"{x:.1%}" if pd.notnull(x) else "N/A")
+            fig2 = px.bar(
+                roi_fund,
+                x="Fund Name",
+                y="Weighted Annualized ROI",
+                title="Weighted Annualized ROI per Fund",
+                text="Annualized ROI Label",
+                color_discrete_sequence=["#B1874C"] * len(roi_fund)
+            )
             st.plotly_chart(fig2, use_container_width=True)
 
             st.subheader(":moneybag: Capital Allocation by Fund")
