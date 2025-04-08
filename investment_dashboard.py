@@ -194,12 +194,28 @@ if uploaded_file is not None:
                 st.info("City/State data not found. Add 'City' and 'State' columns to enable map view.")
 
             st.subheader(":robot_face: AI Summary")
-            top_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=False).head(3)
-            top_roi = top_roi_df["Investment Name"].tolist()
-            low_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=True).head(3)
-            low_roi = low_roi_df["Investment Name"].tolist()
-            st.markdown(f"**Top Performing Investments:** {', '.join(top_roi)}")
-            st.markdown(f"**Lowest Performing Investments:** {', '.join(low_roi)}")
+
+            # 💰 Top Value Creators (by $ gain)
+            df_filtered["$ Gain"] = df_filtered["Fair Value"] - df_filtered["Cost"]
+            top_gainers = df_filtered.sort_values("$ Gain", ascending=False).head(3)["Investment Name"].tolist()
+
+            # 📉 Biggest Losses (by $ loss)
+            df_filtered["$ Loss"] = df_filtered["Cost"] - df_filtered["Fair Value"]
+            df_filtered_loss_only = df_filtered[df_filtered["$ Loss"] > 0]
+            top_losers = df_filtered_loss_only.sort_values("$ Loss", ascending=False).head(3)["Investment Name"].tolist()
+
+            # 🏋️ Highest Conviction (by Cost)
+            top_allocations = df_filtered.sort_values("Cost", ascending=False).head(3)["Investment Name"].tolist()
+
+            # ⚡ Most Efficient (low cost, high ROI)
+            efficient_df = df_filtered[df_filtered["Cost"] < df_filtered["Cost"].median()]  # small bets
+            efficient_df = efficient_df[efficient_df["Annualized ROI"].notnull()]
+            top_efficient = efficient_df.sort_values("Annualized ROI", ascending=False).head(3)["Investment Name"].tolist()
+
+            st.markdown(f"**💰 Largest Value Gains:** {', '.join(top_gainers)}")
+            st.markdown(f"**📉 Largest Losses:** {', '.join(top_losers) if top_losers else 'None'}")
+            st.markdown(f"**🏋️ Highest Conviction Bets:** {', '.join(top_allocations)}")
+            st.markdown(f"**⚡ Most Efficient Bets:** {', '.join(top_efficient)}")
 
             def highlight(val):
                 return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
