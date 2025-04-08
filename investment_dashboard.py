@@ -194,26 +194,14 @@ if uploaded_file is not None:
                 st.info("City/State data not found. Add 'City' and 'State' columns to enable map view.")
 
             st.subheader(":robot_face: AI Summary")
-
-            # Top 3 and Bottom 3 by Annualized ROI
             top_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=False).head(3)
-            low_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=True).head(3)
-
             top_roi = top_roi_df["Investment Name"].tolist()
+            low_roi_df = df_filtered[df_filtered["Annualized ROI"].notnull()].sort_values("Annualized ROI", ascending=True).head(3)
             low_roi = low_roi_df["Investment Name"].tolist()
-
-            top_weighted_roi = (top_roi_df["Annualized ROI"] * top_roi_df["Cost"]).sum() / top_roi_df["Cost"].sum() if top_roi_df["Cost"].sum() > 0 else np.nan
-            low_weighted_roi = (low_roi_df["Annualized ROI"] * low_roi_df["Cost"]).sum() / low_roi_df["Cost"].sum() if low_roi_df["Cost"].sum() > 0 else np.nan
-
-            st.markdown(f"**Top Performing Investments (by Annualized ROI):** {', '.join(top_roi)}")
-            st.markdown(f"**→ Weighted Avg ROI for Top 3:** {top_weighted_roi:.2%}" if not np.isnan(top_weighted_roi) else "**→ Weighted Avg ROI for Top 3:** N/A")
-
-            st.markdown(f"**Lowest Performing Investments (by Annualized ROI):** {', '.join(low_roi)}")
-            st.markdown(f"**→ Weighted Avg ROI for Bottom 3:** {low_weighted_roi:.2%}" if not np.isnan(low_weighted_roi) else "**→ Weighted Avg ROI for Bottom 3:** N/A")
-
-            avg_roi = df_filtered["Annualized ROI"].mean()** {', '.join(top_roi)}")
+            avg_roi = df_filtered["Annualized ROI"].mean()
+            st.markdown(f"**Top Performing Investments:** {', '.join(top_roi)}")
             st.markdown(f"**Lowest Performing Investments:** {', '.join(low_roi)}")
-            st.markdown(f"**Portfolio-Wide Average (Unweighted):** {avg_roi:.2%}" if not np.isnan(avg_roi) else "**Portfolio-Wide Average (Unweighted):** N/A")
+            st.markdown(f"**Average Annualized ROI:** {avg_roi:.2%}")
 
             def highlight(val):
                 return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
