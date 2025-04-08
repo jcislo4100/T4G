@@ -50,10 +50,6 @@ if uploaded_file is not None:
         unique_funds = sorted(df["Fund Name"].dropna().unique())
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 
-        # 🔄 Reset Filters Button
-        if st.button("🔄 Reset Filters"):
-            st.experimental_rerun()
-
         # Apply filters (FIXED + DEBUGGED)
         df_filtered = df.copy()
 
