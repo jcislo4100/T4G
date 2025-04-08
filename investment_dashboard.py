@@ -24,8 +24,7 @@ uploaded_file = st.file_uploader("Upload Investment Excel", type=["xlsx"])
 st.markdown("### :mag: Filter Investments")
 realization_options = ["All", "Realized", "Unrealized"]
 realization_filter = st.radio("Show Investments:", realization_options, horizontal=True)
-unique_funds = sorted(df["Fund Name"].dropna().unique())
-selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
+# Fund filter will be defined after df is created
 
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
@@ -44,6 +43,9 @@ if uploaded_file is not None:
         today = pd.Timestamp.today()
         df["ROI"] = (df["Fair Value"] - df["Cost"]) / df["Cost"]
         df["Annualized ROI"] = df.apply(lambda row: (row["ROI"] / ((today - row["Date"]).days / 365.25)) if (today - row["Date"]).days > 0 else np.nan, axis=1)
+
+        unique_funds = sorted(df["Fund Name"].dropna().unique())
+        selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
 
         unique_funds = sorted(df["Fund Name"].dropna().unique())
         selected_funds = st.multiselect("Select Fund(s)", options=unique_funds, default=unique_funds, key="fund_selector")
