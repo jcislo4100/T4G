@@ -76,7 +76,7 @@ if uploaded_file is not None:
             col1.metric("Total Amount Invested", f"${total_invested:,.0f}")
             col2.metric("Total Fair Value", f"${total_fair_value:,.0f}")
             col3.metric("Portfolio MOIC", f"{portfolio_moic:.2f}x")
-            col4.metric("Annual ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A")
+            col4.metric("Portfolio-Level ROI", f"{portfolio_annualized_roi:.1%}" if not np.isnan(portfolio_annualized_roi) else "N/A")
 
             realized_df = df_filtered[df_filtered["Realized / Unrealized"] == "realized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
             unrealized_df = df_filtered[df_filtered["Realized / Unrealized"] == "unrealized"] if "Realized / Unrealized" in df_filtered.columns else pd.DataFrame()
@@ -96,7 +96,7 @@ if uploaded_file is not None:
             st.plotly_chart(fig1, use_container_width=True)
 
             st.subheader(":chart_with_upwards_trend: Annualized ROI by Fund")
-            roi_fund = df_filtered.groupby("Fund Name")["Annualized ROI"].mean().reset_index()
+            roi_fund = df_filtered.groupby("Fund Name").apply(lambda x: np.average(x["Annualized ROI"], weights=x["Cost"]) if x["Cost"].sum() > 0 else np.nan).reset_index(name="Annualized ROI")
             fig2 = px.bar(roi_fund, x="Fund Name", y="Annualized ROI", title="Annualized ROI per Fund", text_auto=".1%", color_discrete_sequence=["#B1874C"] * len(roi_fund))
             st.plotly_chart(fig2, use_container_width=True)
 
