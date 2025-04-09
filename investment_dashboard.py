@@ -136,10 +136,13 @@ if uploaded_file is not None:
                 st.plotly_chart(fig4, use_container_width=True)
 
             st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-            df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
-            cost_value_df = df_filtered.groupby("Date Group").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
-            fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
-            st.plotly_chart(fig_cost_value, use_container_width=True)
+if df_filtered["Date"].nunique() >= 3:
+    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+    cost_value_df = df_filtered.groupby("Date Group").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
+    fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
+    st.plotly_chart(fig_cost_value, use_container_width=True)
+else:
+    st.info("Not enough date diversity to display the time-series chart. Please reset filters or expand the dataset.")
 
             # ✅ NEW: Location Heatmap at Bottom
             st.subheader(":world_map: Investment HQ Heatmap")
@@ -386,3 +389,5 @@ if uploaded_file is not None:
 
                 with open(pdf_output, "rb") as f:
                     st.download_button("⬇️ Download PDF Report", data=f, file_name="investment_report.pdf", mime="application/pdf")
+
+
