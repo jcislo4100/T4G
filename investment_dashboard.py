@@ -255,7 +255,7 @@ if uploaded_file is not None:
             def highlight(val):
                 return "background-color: #ffe6e6" if isinstance(val, float) and val < 0 else ""
 
-            st.markdown("### :abacus: Investment Table")
+            st.markdown(f"### :abacus: Investment Table – Investments in View: {len(df_filtered)}")
             df_filtered["MOIC"] = df_filtered["MOIC"].round(2).astype(str) + "x"
             df_filtered_display = df_filtered.copy()
             df_filtered_display["Cost"] = df_filtered_display["Cost"].apply(lambda x: f"${x:,.0f}")
