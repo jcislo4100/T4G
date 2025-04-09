@@ -137,7 +137,7 @@ if uploaded_file is not None:
 
             if not search_term:
                 st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-                chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Quarterly Deployed"], index=0)
+                chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Monthly Deployed"], index=0)
                 if chart_mode == "Cumulative":
                     df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
                     cost_value_df = df_filtered.groupby("Date Group")[["Cost", "Fair Value"]].sum().sort_index().cumsum().reset_index()
