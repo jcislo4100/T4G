@@ -317,7 +317,7 @@ if uploaded_file is not None:
                 chart_paths = []
                 chart_titles = ["MOIC by Fund", "Annualized ROI by Fund", "Capital Allocation", "Stage Breakdown", "Cost vs Fair Value Over Time", "Investment HQ Map"]
 
-                figs = [fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value, fig_map if 'fig_map' in locals() else None]
+                figs = [fig1, fig2, fig3, fig4 if 'fig4' in locals() else None, fig_cost_value if 'fig_cost_value' in locals() else None, fig_map if 'fig_map' in locals() else None]
 
                 for i, fig in enumerate(figs):
                     if fig:
