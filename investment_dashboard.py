@@ -146,7 +146,7 @@ if uploaded_file is not None:
                 else:
                     df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
                     monthly_df = df_filtered.groupby("Month")["Cost"].sum().reset_index()
-                    fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Capital Deployed by Month", color_discrete_sequence=["#B1874C"])
+                    fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Monthly Deployed", color_discrete_sequence=["#B1874C"])
                     st.plotly_chart(fig_deployed, use_container_width=True)
             else:
                 st.subheader(":bar_chart: Cost vs Fair Value (Filtered View)")
