@@ -137,14 +137,17 @@ if uploaded_file is not None:
 
             if not search_term:
                 st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-                view_option = st.selectbox("Select Time Grouping", ["Monthly", "Quarterly"], index=0)
-                if view_option == "Quarterly":
-                    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
-                else:
+                chart_mode = st.selectbox("Chart Mode", ["Cumulative", "Quarterly Deployed"], index=0)
+                if chart_mode == "Cumulative":
                     df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
-                cost_value_df = df_filtered.groupby("Date Group").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
-                fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
-                st.plotly_chart(fig_cost_value, use_container_width=True)
+                    cost_value_df = df_filtered.groupby("Date Group")[["Cost", "Fair Value"]].sum().sort_index().cumsum().reset_index()
+                    fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cumulative Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
+                    st.plotly_chart(fig_cost_value, use_container_width=True)
+                else:
+                    df_filtered["Quarter"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
+                    quarterly_df = df_filtered.groupby("Quarter")["Cost"].sum().reset_index()
+                    fig_deployed = px.bar(quarterly_df, x="Quarter", y="Cost", title="Capital Deployed by Quarter", color_discrete_sequence=["#B1874C"])
+                    st.plotly_chart(fig_deployed, use_container_width=True)
             else:
                 st.subheader(":bar_chart: Cost vs Fair Value (Filtered View)")
                 search_chart_df = df_filtered.groupby("Investment Name")[["Cost", "Fair Value"]].sum().reset_index().melt(
