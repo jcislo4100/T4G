@@ -102,8 +102,7 @@ if uploaded_file is not None:
             col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A", help="Distributed to Paid-In Capital: Realized cash returns relative to total invested")
             
             st.markdown("---")
-            st.markdown(f"### 🔢 Investments in View: {len(df_filtered)}")
-
+            
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
             moic_by_fund = df_filtered.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
             moic_by_fund["MOIC Label"] = moic_by_fund["Portfolio MOIC"].round(2).astype(str) + "x"
