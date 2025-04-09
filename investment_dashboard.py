@@ -227,7 +227,7 @@ if uploaded_file is not None:
             else:
                 st.info("City/State data not found. Add 'City' and 'State' columns to enable map view.")
 
-            st.subheader(":robot_face: AI Summary")
+            st.subheader(":robot_face: AI Summary", help="Auto-generated list of top gainers, losses, conviction bets, and efficiency leaders based on capital and performance.")
 
             # 💰 Top Value Creators (by $ gain)
             df_filtered["$ Gain"] = df_filtered["Fair Value"] - df_filtered["Cost"]
