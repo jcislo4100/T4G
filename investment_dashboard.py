@@ -144,9 +144,9 @@ if uploaded_file is not None:
                     fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cumulative Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
                     st.plotly_chart(fig_cost_value, use_container_width=True)
                 else:
-                    df_filtered["Quarter"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
-                    quarterly_df = df_filtered.groupby("Quarter")["Cost"].sum().reset_index()
-                    fig_deployed = px.bar(quarterly_df, x="Quarter", y="Cost", title="Capital Deployed by Quarter", color_discrete_sequence=["#B1874C"])
+                    df_filtered["Month"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+                    monthly_df = df_filtered.groupby("Month")["Cost"].sum().reset_index()
+                    fig_deployed = px.bar(monthly_df, x="Month", y="Cost", title="Capital Deployed by Month", color_discrete_sequence=["#B1874C"])
                     st.plotly_chart(fig_deployed, use_container_width=True)
             else:
                 st.subheader(":bar_chart: Cost vs Fair Value (Filtered View)")
