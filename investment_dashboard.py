@@ -102,6 +102,20 @@ if uploaded_file is not None:
             col5.metric("DPI", f"{dpi:.2f}x" if not np.isnan(dpi) else "N/A", help="Distributed to Paid-In Capital: Realized cash returns relative to total invested")
             
             st.markdown("---")
+            st.subheader(":bar_chart: MOIC Distribution")
+            moic_bins = pd.cut(df_filtered["MOIC"].astype(float), bins=[0, 1, 2, 3, float("inf")], labels=["0-1x", "1-2x", "2-3x", "3x+"])
+            moic_dist = moic_bins.value_counts().sort_index().reset_index()
+            moic_dist.columns = ["MOIC Range", "Count"]
+            fig_dist = px.bar(
+                moic_dist,
+                x="Count",
+                y="MOIC Range",
+                orientation="h",
+                title=f"MOIC Distribution ({moic_dist['Count'].sum()} Investments)",
+                color_discrete_sequence=["#B1874C"]
+            )
+            st.plotly_chart(fig_dist, use_container_width=True)
+
             st.subheader(":bar_chart: Portfolio MOIC by Fund")
             moic_by_fund = df_filtered.groupby("Fund Name").apply(lambda x: x["Fair Value"].sum() / x["Cost"].sum()).reset_index(name="Portfolio MOIC")
             moic_by_fund["MOIC Label"] = moic_by_fund["Portfolio MOIC"].round(2).astype(str) + "x"
