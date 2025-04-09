@@ -137,7 +137,11 @@ if uploaded_file is not None:
 
             if not search_term:
                 st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-                df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+                view_option = st.selectbox("Select Time Grouping", ["Monthly", "Quarterly"], index=0)
+                if view_option == "Quarterly":
+                    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
+                else:
+                    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
                 cost_value_df = df_filtered.groupby("Date Group").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
                 fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
                 st.plotly_chart(fig_cost_value, use_container_width=True)
@@ -159,22 +163,7 @@ if uploaded_file is not None:
                 )
                 st.plotly_chart(fig_bar_filtered, use_container_width=True)
 
-            # 📈 Quarterly Trend View with toggle
-            st.subheader(":calendar: Quarterly Investment Trends")
-            show_cumulative = st.checkbox("Show Cumulative Totals", value=False)
-            df_filtered["Quarter"] = df_filtered["Date"].dt.to_period("Q").dt.to_timestamp()
-            quarterly_df = df_filtered.groupby("Quarter")[["Cost", "Fair Value"]].sum().sort_index()
-            if show_cumulative:
-                quarterly_df = quarterly_df.cumsum()
-            quarterly_df = quarterly_df.reset_index()
-            fig_quarterly = px.line(
-                quarterly_df,
-                x="Quarter",
-                y=["Cost", "Fair Value"],
-                title="Quarterly Cost vs Fair Value",
-                color_discrete_sequence=["#B1874C", "#D4B885"]
-            )
-            st.plotly_chart(fig_quarterly, use_container_width=True)
+            
 
             # ✅ NEW: Location Heatmap at Bottom
             st.subheader(":world_map: Investment HQ Heatmap")
