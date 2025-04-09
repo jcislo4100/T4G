@@ -136,28 +136,28 @@ if uploaded_file is not None:
                 st.plotly_chart(fig4, use_container_width=True)
 
             if not search_term:
-    st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
-    df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
-    cost_value_df = df_filtered.groupby("Date Group").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
-    fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
-    st.plotly_chart(fig_cost_value, use_container_width=True)
-else:
-    st.subheader(":bar_chart: Cost vs Fair Value (Filtered View)")
-    search_chart_df = df_filtered.groupby("Investment Name")[["Cost", "Fair Value"]].sum().reset_index().melt(
-        id_vars="Investment Name",
-        var_name="Metric",
-        value_name="Amount"
-    )
-    fig_bar_filtered = px.bar(
-        search_chart_df,
-        x="Investment Name",
-        y="Amount",
-        color="Metric",
-        barmode="group",
-        title="Cost vs Fair Value for Selected Investments",
-        color_discrete_sequence=["#B1874C", "#D4B885"]
-    )
-    st.plotly_chart(fig_bar_filtered, use_container_width=True)
+                st.subheader(":bar_chart: Cost Basis vs Fair Value Since Inception")
+                df_filtered["Date Group"] = df_filtered["Date"].dt.to_period("M").dt.to_timestamp()
+                cost_value_df = df_filtered.groupby("Date Group").agg({"Cost": "sum", "Fair Value": "sum"}).sort_index().cumsum().reset_index()
+                fig_cost_value = px.line(cost_value_df, x="Date Group", y=["Cost", "Fair Value"], title="Cost vs Fair Value Over Time", color_discrete_sequence=["#B1874C", "#D4B885"])
+                st.plotly_chart(fig_cost_value, use_container_width=True)
+            else:
+                st.subheader(":bar_chart: Cost vs Fair Value (Filtered View)")
+                search_chart_df = df_filtered.groupby("Investment Name")[["Cost", "Fair Value"]].sum().reset_index().melt(
+                    id_vars="Investment Name",
+                    var_name="Metric",
+                    value_name="Amount"
+                )
+                fig_bar_filtered = px.bar(
+                    search_chart_df,
+                    x="Investment Name",
+                    y="Amount",
+                    color="Metric",
+                    barmode="group",
+                    title="Cost vs Fair Value for Selected Investments",
+                    color_discrete_sequence=["#B1874C", "#D4B885"]
+                )
+                st.plotly_chart(fig_bar_filtered, use_container_width=True)
 
             # ✅ NEW: Location Heatmap at Bottom
             st.subheader(":world_map: Investment HQ Heatmap")
