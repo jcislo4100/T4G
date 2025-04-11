@@ -303,14 +303,14 @@ if uploaded_file is not None:
 
             if download_csv:
                 # 🎯 Clean CSV Export Section (only show when data is filtered and ready)
-csv_ready = df_filtered.to_csv(index=False).encode("utf-8")
-st.download_button(
-    label="⬇️ Download Filtered Investments CSV",
-    data=csv_ready,
-    file_name="filtered_investments.csv",
-    mime="text/csv",
-    help="Exports only the currently visible data after filters are applied"
-)
+                csv_ready = df_filtered.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                  label="⬇️ Download Filtered Investments CSV",
+                  data=csv_ready,
+                  file_name="filtered_investments.csv",
+                 mime="text/csv",
+                 help="Exports only the currently visible data after filters are applied"
+                )
 
 
             if download_pdf:
